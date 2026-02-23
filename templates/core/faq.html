@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}FAQ — PathFinder{% endblock %}
+{% block content %}
+<main style="padding:48px 0 64px;">
+    <div class="container" style="max-width:700px;">
+        <h1 style="font-size:1.6rem;margin-bottom:24px;">Foire aux questions</h1>
+        {% for q, a in faq_items %}
+        <div class="card" style="padding:20px 24px;margin-bottom:12px;">
+            <h3 style="font-size:0.95rem;margin-bottom:8px;">{{ q }}</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">{{ a }}</p>
+        </div>
+        {% empty %}
+        <div class="card" style="padding:20px 24px;margin-bottom:12px;">
+            <h3 style="font-size:0.95rem;margin-bottom:8px;">PathFinder est-il gratuit ?</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">Le test d'orientation et les 2 premières étapes
+                sont entièrement gratuits. Les étapes avancées sont accessibles via des micro-paiements à partir de 500
+                FCFA.</p>
+        </div>
+        <div class="card" style="padding:20px 24px;margin-bottom:12px;">
+            <h3 style="font-size:0.95rem;margin-bottom:8px;">Comment fonctionne le test d'orientation ?</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">Notre algorithme IA analyse vos réponses à 10
+                questions et calcule votre pourcentage d'adéquation avec différents métiers du numérique.</p>
+        </div>
+        <div class="card" style="padding:20px 24px;margin-bottom:12px;">
+            <h3 style="font-size:0.95rem;margin-bottom:8px;">Les paiements sont-ils réels ?</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">Non. Il s'agit d'une simulation. Aucune transaction
+                réelle n'est effectuée et aucune donnée bancaire n'est collectée.</p>
+        </div>
+        <div class="card" style="padding:20px 24px;margin-bottom:12px;">
+            <h3 style="font-size:0.95rem;margin-bottom:8px;">Comment gagner des XP ?</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">En complétant le test, les étapes de votre
+                parcours, en lisant des articles et en relevant les défis hebdomadaires. Les XP ne peuvent pas être
+                achetés directement.</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+{% endblock %}

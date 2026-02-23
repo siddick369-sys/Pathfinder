@@ -1,0 +1,71 @@
+{% load static %}
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="container">
+        <a href="{% url 'core:home' %}" class="navbar-logo">
+            <div class="logo-icon">PF</div>
+            PathFinder
+        </a>
+        <div class="navbar-menu">
+            {% if user.is_authenticated %}
+            <a href="{% url 'accounts:dashboard' %}"
+                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Tableau de bord</a>
+            <a href="{% url 'orientation:test' %}"
+                class="{% if request.resolver_match.app_name == 'orientation' %}active{% endif %}">Test</a>
+            <a href="{% url 'parcours:career' %}"
+                class="{% if request.resolver_match.app_name == 'parcours' %}active{% endif %}">Parcours</a>
+            <a href="{% url 'competences:list' %}"
+                class="{% if request.resolver_match.app_name == 'competences' %}active{% endif %}">Compétences</a>
+            <a href="{% url 'blog:list' %}"
+                class="{% if request.resolver_match.app_name == 'blog' %}active{% endif %}">Blog</a>
+            {% else %}
+            <a href="{% url 'core:home' %}">Accueil</a>
+            <a href="{% url 'core:home' %}#fonctionnement">Fonctionnement</a>
+            <a href="{% url 'core:home' %}#tarifs">Tarifs</a>
+            <a href="{% url 'core:contact' %}">Contact</a>
+            {% endif %}
+        </div>
+        <div class="navbar-actions">
+            {% if user.is_authenticated %}
+            <a href="{% url 'notifications:list' %}" style="position:relative;color:var(--text-secondary);">
+                🔔
+                {% if unread_notifications_count %}
+                <span class="notif-badge">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'gamification:leaderboard' %}" style="color:var(--text-secondary);font-size:0.85rem;"
+                title="Classement">🏆</a>
+            <a href="{% url 'gamification:shop' %}" style="color:var(--text-secondary);font-size:0.85rem;"
+                title="Boutique">🛒</a>
+            <button class="theme-toggle" aria-label="Changer le thème">🌙</button>
+            <span style="color:var(--text-secondary);font-size:0.85rem;">{{ user.first_name }} {{ user.last_name
+                }}</span>
+            <a href="{% url 'gamification:profile' %}" style="text-decoration:none;">
+                <div class="avatar" title="{{ user.total_xp }} XP — {{ user.level_name }}">{{ user.avatar_initials }}
+                </div>
+            </a>
+            <a href="{% url 'accounts:logout' %}" style="color:var(--text-secondary);font-size:0.85rem;">Déconnexion</a>
+            {% else %}
+            <button class="theme-toggle" aria-label="Changer le thème">🌙</button>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-sm">Connexion</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Commencer</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<style>
+    .notif-badge {
+        position: absolute;
+        top: -4px;
+        right: -6px;
+        background: var(--danger, #dc2626);
+        color: white;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

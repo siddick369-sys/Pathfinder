@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Classement — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .lb-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .lb-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .lb-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .podium {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 40px;
+        flex-wrap: wrap
+    }
+
+    .podium-card {
+        text-align: center;
+        padding: 24px 20px;
+        border-radius: 16px;
+        min-width: 140px;
+        transition: all 0.3s
+    }
+
+    .podium-card:hover {
+        transform: translateY(-4px)
+    }
+
+    .podium-card .rank {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        display: block
+    }
+
+    .podium-card .avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        margin: 0 auto 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff
+    }
+
+    .podium-card .name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px
+    }
+
+    .podium-card .xp {
+        font-size: 0.8rem;
+        color: #d97706;
+        font-weight: 600
+    }
+
+    .podium-card .lvl {
+        font-size: 0.7rem;
+        color: var(--text-secondary)
+    }
+
+    .podium-card.gold {
+        background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(234, 179, 8, 0.3)
+    }
+
+    .podium-card.gold .avatar {
+        background: linear-gradient(135deg, #f59e0b, #d97706)
+    }
+
+    .podium-card.silver {
+        background: linear-gradient(135deg, rgba(156, 163, 175, 0.15), rgba(107, 114, 128, 0.05));
+        border: 1px solid rgba(156, 163, 175, 0.3)
+    }
+
+    .podium-card.silver .avatar {
+        background: linear-gradient(135deg, #9ca3af, #6b7280)
+    }
+
+    .podium-card.bronze {
+        background: linear-gradient(135deg, rgba(180, 83, 9, 0.12), rgba(217, 119, 6, 0.05));
+        border: 1px solid rgba(180, 83, 9, 0.2)
+    }
+
+    .podium-card.bronze .avatar {
+        background: linear-gradient(135deg, #b45309, #92400e)
+    }
+
+    .lb-table {
+        width: 100%;
+        border-collapse: collapse
+    }
+
+    .lb-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .lb-table td {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .lb-table tr:last-child td {
+        border-bottom: none
+    }
+
+    .lb-table tr:hover {
+        background: rgba(26, 86, 219, 0.03)
+    }
+
+    .lb-table tr.is-me {
+        background: rgba(26, 86, 219, 0.06);
+        font-weight: 600
+    }
+
+    .lb-table .rank-cell {
+        width: 50px;
+        font-weight: 700;
+        color: var(--primary)
+    }
+
+    .lb-table .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px
+    }
+
+    .lb-table .mini-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        flex-shrink: 0
+    }
+
+    .lb-table .xp-cell {
+        color: #d97706;
+        font-weight: 600
+    }
+
+    .lb-table .lvl-cell {
+        color: var(--text-secondary);
+        font-size: 0.85rem
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .podium {
+            flex-direction: column;
+            align-items: center
+        }
+
+        .lb-table .user-cell span:last-child {
+            display: none
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+
+        <div class="lb-hero animate-in">
+            <h1>🏆 Classement PathFinder</h1>
+            <p>Les meilleurs étudiants de la plateforme</p>
+        </div>
+
+        <!-- Podium top 3 -->
+        {% if leaderboard|length >= 3 %}
+        <div class="podium animate-in">
+            <div class="podium-card silver">
+                <span class="rank">🥈</span>
+                <div class="avatar">{{ leaderboard.1.avatar_initials }}</div>
+                <div class="name">{{ leaderboard.1.first_name }} {{ leaderboard.1.last_name }}</div>
+                <div class="xp">⚡ {{ leaderboard.1.total_xp }} XP</div>
+                <div class="lvl">{{ leaderboard.1.level_icon }} Niveau {{ leaderboard.1.level }}</div>
+            </div>
+            <div class="podium-card gold" style="padding-bottom:40px;">
+                <span class="rank">🥇</span>
+                <div class="avatar">{{ leaderboard.0.avatar_initials }}</div>
+                <div class="name">{{ leaderboard.0.first_name }} {{ leaderboard.0.last_name }}</div>
+                <div class="xp">⚡ {{ leaderboard.0.total_xp }} XP</div>
+                <div class="lvl">{{ leaderboard.0.level_icon }} Niveau {{ leaderboard.0.level }}</div>
+            </div>
+            <div class="podium-card bronze">
+                <span class="rank">🥉</span>
+                <div class="avatar">{{ leaderboard.2.avatar_initials }}</div>
+                <div class="name">{{ leaderboard.2.first_name }} {{ leaderboard.2.last_name }}</div>
+                <div class="xp">⚡ {{ leaderboard.2.total_xp }} XP</div>
+                <div class="lvl">{{ leaderboard.2.level_icon }} Niveau {{ leaderboard.2.level }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Full table -->
+        <div class="card animate-in" style="padding:0;overflow:hidden;">
+            <table class="lb-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Utilisateur</th>
+                        <th>XP</th>
+                        <th>Niveau</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in leaderboard %}
+                    <tr class="{% if u.id == current_user.id %}is-me{% endif %}">
+                        <td class="rank-cell">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="mini-avatar">{{ u.avatar_initials }}</div>
+                                <div>
+                                    <div>{{ u.first_name }} {{ u.last_name }}</div>
+                                    <span style="font-size:0.7rem;color:var(--text-secondary);">{{ u.level_icon }} {{ u.level_name }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="xp-cell">{{ u.total_xp }} XP</td>
+                        <td class="lvl-cell">{{ u.level_icon }} Niveau {{ u.level }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align:center;padding:40px;color:var(--text-secondary);">Aucun
+                            utilisateur classé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'gamification:profile' %}" class="btn btn-outline">🏅 Mon profil</a>
+            <a href="{% url 'gamification:shop' %}" class="btn btn-primary">🛒 Boutique</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

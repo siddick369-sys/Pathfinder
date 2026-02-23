@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Blog — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px;
+    }
+
+    .blog-hero {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .blog-hero h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .blog-hero p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .categories {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+
+    .cat-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: var(--font);
+    }
+
+    .cat-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .cat-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+
+    .post-card {
+        overflow: hidden;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .post-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: linear-gradient(135deg, rgba(26, 86, 219, 0.08), rgba(34, 197, 94, 0.08));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+
+    .post-body {
+        padding: 20px;
+    }
+
+    .post-body .cat-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+
+    .post-body h2 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+
+    .post-body .excerpt {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .post-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .post-meta .author {
+        font-weight: 500;
+    }
+
+    .empty-blog {
+        text-align: center;
+        padding: 60px 24px;
+    }
+
+    .empty-blog .icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    @media(max-width:768px) {
+        .posts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="blog-hero animate-in">
+            <h1>📰 Blog PathFinder</h1>
+            <p>Articles, conseils et ressources pour booster votre carrière tech</p>
+        </div>
+
+        <div class="categories">
+            <a href="{% url 'blog:list' %}" class="cat-btn {% if not active_cat %}active{% endif %}">Tous</a>
+            {% for cat in categories %}
+            <a href="{% url 'blog:list' %}?cat={{ cat.slug }}"
+                class="cat-btn {% if active_cat == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="posts-grid">
+            {% for post in posts %}
+            <a href="{% url 'blog:detail' slug=post.slug %}" style="text-decoration:none;color:inherit;">
+                <div class="card post-card animate-in">
+                    <div class="post-img">📝</div>
+                    <div class="post-body">
+                        {% if post.category %}<span class="cat-tag">{{ post.category.name }}</span>{% endif %}
+                        <h2>{{ post.title }}</h2>
+                        {% if post.excerpt %}<p class="excerpt">{{ post.excerpt|truncatewords:25 }}</p>{% endif %}
+                        <div class="post-meta">
+                            <span class="author">{% if post.author %}{{ post.author.first_name }} {{ post.author.last_name }}{% else %}PathFinder{% endif %}</span>
+                            <span>{{ post.created_at|naturaltime }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card empty-blog" style="grid-column:1/-1;">
+                <div class="icon">📭</div>
+                <h3>Aucun article pour le moment</h3>
+                <p style="color:var(--text-secondary);">Les articles seront bientôt publiés.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}

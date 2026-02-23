@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Boutique — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .shop-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .shop-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .shop-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .shop-hero .xp-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: var(--radius-full);
+        background: rgba(234, 179, 8, 0.12);
+        color: #d97706;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-top: 12px
+    }
+
+    .boosters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px
+    }
+
+    .booster-card {
+        padding: 28px;
+        text-align: center;
+        position: relative;
+        transition: all 0.3s;
+        overflow: hidden
+    }
+
+    .booster-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .booster-card.owned {
+        border: 2px solid var(--success)
+    }
+
+    .booster-card .owned-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        text-transform: uppercase
+    }
+
+    .booster-card .icon {
+        font-size: 2.8rem;
+        margin-bottom: 12px;
+        display: block
+    }
+
+    .booster-card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 6px
+    }
+
+    .booster-card .desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        line-height: 1.5
+    }
+
+    .booster-card .type-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        margin-bottom: 12px
+    }
+
+    .booster-card .details {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap
+    }
+
+    .booster-card .detail {
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .booster-card .detail strong {
+        color: var(--text)
+    }
+
+    .booster-card .price {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 16px
+    }
+
+    .booster-card .price small {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--text-secondary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .boosters-grid {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+
+        <div class="shop-hero animate-in">
+            <h1>🛒 Boutique PathFinder</h1>
+            <p>Boostez votre progression avec nos offres éthiques</p>
+            <div class="xp-badge">⚡ Votre solde : {{ user_xp }} XP</div>
+        </div>
+
+        <div class="boosters-grid">
+            {% for item in booster_data %}
+            <div class="card booster-card {% if item.is_owned %}owned{% endif %} animate-in">
+                {% if item.is_owned %}<span class="owned-badge">✅ Activé</span>{% endif %}
+                <span class="icon">{{ item.booster.icon }}</span>
+                <span class="type-tag">{{ item.booster.get_booster_type_display }}</span>
+                <h3>{{ item.booster.name }}</h3>
+                <p class="desc">{{ item.booster.description }}</p>
+                <div class="details">
+                    {% if item.booster.duration_days > 0 %}
+                    <span class="detail">⏱️ <strong>{{ item.booster.duration_days }} jours</strong></span>
+                    {% else %}
+                    <span class="detail">♾️ <strong>Permanent</strong></span>
+                    {% endif %}
+                    {% if item.booster.multiplier > 1 %}
+                    <span class="detail">🚀 <strong>×{{ item.booster.multiplier|floatformat:0 }}</strong> XP</span>
+                    {% endif %}
+                </div>
+                <div class="price">{{ item.booster.price_fcfa }} FCFA <small>/ unité</small></div>
+                {% if item.is_owned %}
+                <button class="btn btn-outline btn-sm btn-full" disabled>Déjà activé</button>
+                {% else %}
+                <a href="{% url 'payments:pay' 'booster' item.booster.id %}"
+                    class="btn btn-primary btn-sm btn-full">Acheter →</a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">🛒</p>
+                <h3>Boutique bientôt disponible</h3>
+                <p style="color:var(--text-secondary);">De nouveaux boosters arrivent prochainement.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'gamification:profile' %}" class="btn btn-outline">🏅 Mon profil</a>
+            <a href="{% url 'gamification:leaderboard' %}" class="btn btn-outline">🏆 Classement</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

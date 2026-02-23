@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Résultats — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 48px 0 64px;
+    }
+
+    .results-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .results-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .results-header p {
+        color: var(--text-secondary);
+    }
+
+    .careers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .career-card {
+        padding: 28px;
+        text-align: center;
+        position: relative;
+    }
+
+    .career-card:first-child {
+        border: 2px solid var(--primary);
+    }
+
+    .career-card .rank {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    .circle-progress {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 16px;
+        position: relative;
+    }
+
+    .circle-progress svg {
+        transform: rotate(-90deg);
+    }
+
+    .circle-progress .pct {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .career-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .career-card .tags {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .career-card .tags span {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        background: var(--bg-card);
+        border-radius: var(--radius-full);
+        color: var(--text-secondary);
+    }
+
+    .summary-card {
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+
+    .summary-card h2 {
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+    }
+
+    .summary-card p {
+        color: var(--text-secondary);
+        line-height: 1.7;
+        white-space: pre-line;
+    }
+
+    .projection-card {
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+
+    .projection-card h2 {
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+    }
+
+    .projection-card p {
+        color: var(--text-secondary);
+        line-height: 1.8;
+        white-space: pre-line;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container" style="max-width:900px;">
+        <div class="results-header animate-in">
+            <h1>🎯 Vos résultats d'orientation</h1>
+            <p>Basés sur l'analyse IA de vos {{ result.selected_choices|length }} réponses</p>
+        </div>
+
+        <div class="careers-grid">
+            {% for item in top_careers %}
+            <div class="card career-card animate-in">
+                <div class="rank">#{{ forloop.counter }}</div>
+                <div class="circle-progress">
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="8" />
+                        <circle cx="60" cy="60" r="52" fill="none"
+                            stroke="{% if forloop.counter == 1 %}var(--primary){% elif forloop.counter == 2 %}var(--success){% else %}#f59e0b{% endif %}"
+                            stroke-width="8" stroke-linecap="round"
+                            stroke-dasharray="{{ item.percentage|floatformat:0 }}% 999"
+                            style="stroke-dasharray: {% widthratio item.percentage 100 327 %} 327;" />
+                    </svg>
+                    <div class="pct">{{ item.percentage }}%</div>
+                </div>
+                <h3>{% if item.career %}{{ item.career.title }}{% else %}{{ item.slug }}{% endif %}</h3>
+                {% if item.career %}
+                <div class="tags">
+                    {% for tag in item.career.tags %}<span>{{ tag }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                {% if forloop.first %}
+                <a href="{% url 'parcours:career' %}" class="btn btn-primary btn-full" style="margin-top:16px;">Voir le
+                    parcours →</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Summary -->
+        <div class="card summary-card animate-in">
+            <h2>📝 Analyse personnalisée</h2>
+            <p>{{ result.summary }}</p>
+        </div>
+
+        <!-- Projection -->
+        {% if result.career_projection_3y %}
+        <div class="card projection-card animate-in">
+            <h2>🔮 Projection de carrière sur 3 ans</h2>
+            <p>{{ result.career_projection_3y }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Priority Skills -->
+        {% if result.priority_skills %}
+        <div class="card summary-card animate-in">
+            <h2>💡 Compétences prioritaires à développer</h2>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+                {% for skill in result.priority_skills %}
+                <span class="badge badge-primary">{{ skill.icon }} {{ skill.name }}</span>
+                {% endfor %}
+            </div>
+            <a href="{% url 'competences:list' %}" class="btn btn-outline" style="margin-top:16px;">Voir toutes les
+                compétences →</a>
+        </div>
+        {% endif %}
+
+        <div style="text-align:center;margin-top:24px;">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">Aller au tableau de bord →</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

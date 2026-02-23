@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Parcours — {{ career.title }} — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 48px 0 64px;
+    }
+
+    .career-header h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+    }
+
+    .career-header h1 span {
+        color: var(--primary);
+    }
+
+    .career-header p {
+        color: var(--text-secondary);
+        max-width: 600px;
+    }
+
+    .progress-overview {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        margin: 24px 0 40px;
+    }
+
+    .progress-overview .track {
+        flex: 1;
+        height: 8px;
+        background: var(--bg-card);
+        border-radius: 4px;
+        margin: 0 16px;
+        overflow: hidden;
+    }
+
+    .progress-overview .fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        border-radius: 4px;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 60px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 28px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--border);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 32px;
+    }
+
+    .timeline-item .number {
+        position: absolute;
+        left: -60px;
+        top: 0;
+        width: 48px;
+        text-align: right;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .timeline-item .dot {
+        position: absolute;
+        left: -36px;
+        top: 6px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        background: var(--bg-page);
+        z-index: 1;
+    }
+
+    .timeline-item.completed .dot {
+        background: var(--success);
+        border-color: var(--success);
+    }
+
+    .timeline-item.active .dot {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .timeline-item.completed~.timeline-item:not(.completed):not(.active) .dot {}
+
+    .tl-card {
+        padding: 20px 24px;
+    }
+
+    .tl-card .badges {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .tl-card .badges .badge {
+        font-size: 0.7rem;
+    }
+
+    .tl-card h3 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+
+    .tl-card p {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .tl-card .price-tag {
+        float: right;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container" style="max-width:700px;">
+        <div class="career-header animate-in">
+            <h1>Votre parcours vers <span>{{ career.title }}</span></h1>
+            <p>{{ career.description|truncatewords:30 }}</p>
+        </div>
+
+        <div class="card progress-overview animate-in">
+            <span>📋 {{ completed_count }} étapes sur {{ total_steps }} complétées</span>
+            <div class="track">
+                <div class="fill" style="width:{{ progress_pct }}%"></div>
+            </div>
+            <span style="font-weight:600;color:var(--primary);">{{ progress_pct }}%</span>
+        </div>
+
+        <div class="timeline">
+            {% for item in timeline %}
+            <div class="timeline-item {{ item.status }}">
+                <div class="number">{{ item.step.order|stringformat:"02d" }}</div>
+                <div class="dot"></div>
+                <div class="card tl-card animate-in">
+                    <div class="badges">
+                        {% if item.step.is_free %}<span class="badge badge-success">GRATUIT ✓</span>
+                        {% elif item.step.is_premium %}<span class="badge badge-warning">PREMIUM</span>
+                        {% else %}<span class="badge badge-outline">PAYANT</span>{% endif %}
+                        {% if item.status == 'completed' %}<span class="badge badge-success">Complété</span>
+                        {% elif item.status == 'active' %}<span class="badge badge-primary">EN COURS</span>{% endif %}
+                    </div>
+                    {% if item.step.price_fcfa > 0 and not item.step.is_free %}
+                    <span class="price-tag">{{ item.step.price_fcfa|intcomma }} FCFA</span>
+                    {% endif %}
+                    <h3>{{ item.step.title }}</h3>
+                    <p>{{ item.step.description }}</p>
+                    {% if item.status == 'active' %}
+                    <a href="{% url 'parcours:complete_step' item.step.id %}" class="btn btn-primary btn-sm"
+                        style="margin-top:12px;">Continuer →</a>
+                    {% elif item.status == 'locked' and not item.step.is_free %}
+                    <a href="{% url 'payments:pay' 'step' item.step.id %}"
+                        style="color:var(--primary);font-size:0.85rem;margin-top:8px;display:inline-block;">Débloquer
+                        l'accès</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% if messages %}
+<div class="container" style="padding-top:12px;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="padding:12px 20px;border-radius:var(--radius-sm);margin-bottom:8px;
+      {% if message.tags == 'success' %}background:var(--success-light);color:var(--success);border:1px solid var(--success);
+      {% elif message.tags == 'error' %}background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid #dc2626;
+      {% elif message.tags == 'warning' %}background:var(--amber-light);color:#d97706;border:1px solid #d97706;
+      {% else %}background:rgba(26,86,219,0.1);color:var(--primary);border:1px solid var(--primary);{% endif %}
+      font-size:0.9rem;">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

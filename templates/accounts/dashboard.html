@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Tableau de bord — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px;
+    }
+
+    .welcome-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 28px 32px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .welcome-card h1 {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+    }
+
+    .welcome-card .meta {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .welcome-card .actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .progress-bar-container {
+        margin-top: 16px;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    .progress-track {
+        height: 8px;
+        background: var(--bg-card);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        border-radius: 4px;
+        transition: width 0.5s;
+    }
+
+    .rec-card {
+        padding: 24px 32px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .rec-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .rec-card h2 {
+        font-size: 1.15rem;
+        margin-bottom: 4px;
+    }
+
+    .rec-card .match {
+        color: var(--success);
+        font-size: 0.85rem;
+    }
+
+    .steps-title {
+        font-size: 1.15rem;
+        margin: 24px 0 16px;
+    }
+
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .step-card {
+        padding: 20px;
+        position: relative;
+    }
+
+    .step-card.completed {
+        border-left: 3px solid var(--success);
+    }
+
+    .step-card.active {
+        border: 2px solid var(--primary);
+    }
+
+    .step-card.locked {
+        opacity: 0.65;
+    }
+
+    .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .step-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .step-status {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+    }
+
+    .step-status.completed {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    .step-status.active {
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+    }
+
+    .step-status.locked {
+        background: var(--bg-card);
+        color: var(--text-secondary);
+    }
+
+    .step-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+    }
+
+    .step-card p {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .step-price {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+    }
+
+    .xp-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(234, 179, 8, 0.1);
+        color: #d97706;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    @media(max-width:768px) {
+        .steps-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <!-- Welcome -->
+        <div class="card welcome-card animate-in">
+            <div>
+                <h1>Bienvenue, {{ user.first_name }} 👋</h1>
+                <p class="meta">Filière : {{ user.get_filiere_display }} • Niveau : {{ user.get_niveau_display }}</p>
+                <div class="progress-bar-container">
+                    <div class="progress-label">
+                        <span>Progression globale du parcours</span>
+                        <span>{{ progress.global_percent|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width:{{ progress.global_percent }}%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <span class="xp-badge">{{ user_level_icon }} {{ user.total_xp|intcomma }} XP · {{ user_level_name }}</span>
+            </div>
+        </div>
+
+        <!-- Career recommendation -->
+        {% if recommended_career %}
+        <div class="card rec-card animate-in">
+            <div>
+                <div class="rec-badge">⭐ VOTRE MÉTIER RECOMMANDÉ</div>
+                <h2>{{ recommended_career.title }}</h2>
+                <p class="match">✅ {{ latest_result.scores|dictsort:0|first|last }}% d'adéquation • Basé sur vos tests
+                    et compétences</p>
+            </div>
+            <a href="{% url 'parcours:career' %}" class="btn btn-primary">Voir le parcours complet →</a>
+        </div>
+        {% else %}
+        <div class="card rec-card animate-in">
+            <div>
+                <div class="rec-badge">🎯 PASSEZ LE TEST</div>
+                <h2>Découvrez votre métier idéal</h2>
+                <p class="match">Répondez à 10 questions pour obtenir votre parcours personnalisé</p>
+            </div>
+            <a href="{% url 'orientation:test' %}" class="btn btn-primary">Commencer le test →</a>
+        </div>
+        {% endif %}
+
+        <!-- Steps -->
+        <h2 class="steps-title">📋 Étapes de votre réussite</h2>
+        <div class="steps-grid">
+            {% for item in career_steps %}
+            <div class="card step-card {{ item.status }} animate-in">
+                <div class="step-header">
+                    <div class="step-icon"
+                        style="background:{% if item.status == 'completed' %}var(--success-light){% elif item.status == 'unlocked' %}rgba(26,86,219,0.1){% else %}var(--bg-card){% endif %};">
+                        {{ item.step.icon }}
+                    </div>
+                    <span class="step-status {{ item.status }}">
+                        {% if item.status == 'completed' %}COMPLÉTÉ
+                        {% elif item.status == 'unlocked' %}EN COURS
+                        {% else %}VERROUILLÉ{% endif %}
+                    </span>
+                </div>
+                <h3>{{ item.step.title }}</h3>
+                <p>{{ item.step.description|truncatewords:15 }}</p>
+                {% if item.status == 'completed' %}
+                {% elif item.status == 'unlocked' %}
+                <a href="{% url 'parcours:complete_step' item.step.id %}" class="btn btn-primary btn-sm"
+                    style="margin-top:8px;">Compléter →</a>
+                {% elif not item.step.is_free %}
+                <p class="step-price" style="margin-top:8px;">🔒 {{ item.step.price_fcfa|intcomma }} FCFA</p>
+                <a href="{% url 'payments:pay' 'step' item.step.id %}" class="btn btn-outline btn-sm"
+                    style="margin-top:4px;">Débloquer</a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="card step-card" style="grid-column:1/-1;text-align:center;padding:40px;">
+                <p>Passez le test d'orientation pour voir vos étapes de carrière.</p>
+                <a href="{% url 'orientation:test' %}" class="btn btn-primary" style="margin-top:16px;">Commencer le
+                    test →</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align:center;margin-top:32px;">
+            <a href="{% url 'parcours:career' %}" class="btn btn-primary btn-lg">Continuer mon parcours »</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Connexion — PathFinder{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-page {
+        min-height: calc(100vh - var(--nav-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+    }
+
+    .auth-card {
+        max-width: 420px;
+        width: 100%;
+        padding: 40px;
+    }
+
+    .auth-card h1 {
+        font-size: 1.6rem;
+        margin-bottom: 4px;
+    }
+
+    .auth-card .sub {
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+        font-size: 0.9rem;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .error-list {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        list-style: none;
+        padding: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="card auth-card animate-in">
+        <h1>Bon retour ! 👋</h1>
+        <p class="sub">Connectez-vous pour continuer votre parcours</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">{{ form.username.label }}</label>
+                {{ form.username }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">{{ form.password.label }}</label>
+                {{ form.password }}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">Se connecter
+                →</button>
+        </form>
+
+        <div class="auth-footer">
+            Pas encore inscrit ? <a href="{% url 'accounts:register' %}">Créer un compte</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

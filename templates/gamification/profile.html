@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Mon Parcours Gamification — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .gam-hero {
+        padding: 32px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        margin-bottom: 24px
+    }
+
+    .gam-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #6366f1);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        flex-shrink: 0
+    }
+
+    .gam-info h1 {
+        font-size: 1.4rem;
+        margin-bottom: 4px
+    }
+
+    .gam-info p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .gam-stats {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+        flex-wrap: wrap
+    }
+
+    .gam-stat {
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        font-size: 0.8rem;
+        font-weight: 600
+    }
+
+    .gam-stat.xp {
+        background: rgba(234, 179, 8, 0.1);
+        color: #d97706
+    }
+
+    .gam-stat.lvl {
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary)
+    }
+
+    .gam-stat.streak {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444
+    }
+
+    .xp-bar-outer {
+        flex: 1;
+        min-width: 200px;
+        margin-top: 8px
+    }
+
+    .xp-bar-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 4px
+    }
+
+    .xp-bar-track {
+        height: 10px;
+        background: var(--bg);
+        border-radius: 6px;
+        overflow: hidden
+    }
+
+    .xp-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f59e0b, #ef4444);
+        border-radius: 6px;
+        transition: width 0.8s ease
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+        margin: 32px 0 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px
+    }
+
+    .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px
+    }
+
+    .badge-card {
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s
+    }
+
+    .badge-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .badge-card .icon {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        display: block
+    }
+
+    .badge-card .name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 4px
+    }
+
+    .badge-card .desc {
+        font-size: 0.7rem;
+        color: var(--text-secondary)
+    }
+
+    .badge-card .date {
+        font-size: 0.65rem;
+        color: var(--primary);
+        margin-top: 6px
+    }
+
+    .badge-card.locked {
+        opacity: 0.4;
+        filter: grayscale(1)
+    }
+
+    .badge-card.locked .icon {
+        font-size: 2rem
+    }
+
+    .challenges-grid {
+        display: grid;
+        gap: 16px
+    }
+
+    .challenge-card {
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.2s
+    }
+
+    .challenge-card:hover {
+        transform: translateX(4px)
+    }
+
+    .challenge-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        background: rgba(234, 179, 8, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0
+    }
+
+    .challenge-info {
+        flex: 1
+    }
+
+    .challenge-info h3 {
+        font-size: 0.95rem;
+        margin-bottom: 4px
+    }
+
+    .challenge-info p {
+        font-size: 0.8rem;
+        color: var(--text-secondary)
+    }
+
+    .challenge-meta {
+        display: flex;
+        gap: 12px;
+        margin-top: 6px;
+        flex-wrap: wrap
+    }
+
+    .challenge-meta span {
+        font-size: 0.7rem;
+        font-weight: 500
+    }
+
+    .challenge-meta .xp {
+        color: #d97706
+    }
+
+    .challenge-meta .dates {
+        color: var(--text-secondary)
+    }
+
+    .challenge-status {
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--radius-full)
+    }
+
+    .challenge-status.done {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a
+    }
+
+    .challenge-status.active {
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary)
+    }
+
+    .challenge-status.pending {
+        background: rgba(107, 114, 128, 0.1);
+        color: var(--text-secondary)
+    }
+
+    .xp-timeline {
+        display: grid;
+        gap: 8px
+    }
+
+    .xp-event {
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: var(--radius-sm);
+        background: var(--bg)
+    }
+
+    .xp-event .action {
+        font-size: 0.85rem;
+        font-weight: 500
+    }
+
+    .xp-event .amount {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #d97706
+    }
+
+    .xp-event .time {
+        font-size: 0.7rem;
+        color: var(--text-secondary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .gam-hero {
+            flex-direction: column;
+            text-align: center
+        }
+
+        .gam-stats {
+            justify-content: center
+        }
+
+        .badges-grid {
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr))
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+
+        <!-- Hero -->
+        <div class="card gam-hero animate-in">
+            <div class="gam-avatar">{{ request.user.avatar_initials }}</div>
+            <div class="gam-info" style="flex:1;">
+                <h1>{{ request.user.level_icon }} {{ request.user.first_name }} {{ request.user.last_name }}</h1>
+                <p>{{ request.user.level_name }} — Niveau {{ request.user.level }}</p>
+                <div class="gam-stats">
+                    <span class="gam-stat xp">⚡ {{ request.user.total_xp }} XP</span>
+                    <span class="gam-stat lvl">📊 Niveau {{ request.user.level }}</span>
+                    <span class="gam-stat streak">🏅 {{ badges.count }} badge{{ badges.count|pluralize }}</span>
+                </div>
+                <div class="xp-bar-outer">
+                    <div class="xp-bar-label">
+                        <span>Niveau {{ request.user.level }}</span>
+                        <span>Niveau {{ request.user.level|add:1 }}</span>
+                    </div>
+                    <div class="xp-bar-track">
+                        <div class="xp-bar-fill" style="width:{{ xp_progress_pct }}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges -->
+        <h2 class="section-title">🏅 Mes Badges</h2>
+        <div class="badges-grid">
+            {% for ub in badges %}
+            <div class="card badge-card animate-in">
+                <span class="icon">{{ ub.badge.icon }}</span>
+                <div class="name">{{ ub.badge.name }}</div>
+                <div class="desc">{{ ub.badge.description }}</div>
+                <div class="date">{{ ub.earned_at|naturaltime }}</div>
+            </div>
+            {% endfor %}
+            {% for b in locked_badges %}
+            <div class="card badge-card locked animate-in">
+                <span class="icon">🔒</span>
+                <div class="name">{{ b.name }}</div>
+                <div class="desc">{{ b.description }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Challenges -->
+        <h2 class="section-title">🎯 Défis en cours</h2>
+        <div class="challenges-grid">
+            {% for item in challenge_data %}
+            <div class="card challenge-card animate-in">
+                <div class="challenge-icon">🎯</div>
+                <div class="challenge-info">
+                    <h3>{{ item.challenge.title }}</h3>
+                    <p>{{ item.challenge.description }}</p>
+                    <div class="challenge-meta">
+                        <span class="xp">⚡ +{{ item.challenge.xp_reward }} XP</span>
+                        <span class="dates">📅 {{ item.challenge.start_date|date:"d M" }} → {{ item.challenge.end_date|date:"d M" }}</span>
+                    </div>
+                </div>
+                {% if item.is_completed %}
+                <span class="challenge-status done">✅ Terminé</span>
+                {% elif item.challenge.is_ongoing %}
+                <span class="challenge-status active">⏳ En cours</span>
+                {% else %}
+                <span class="challenge-status pending">📅 À venir</span>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="card" style="padding:40px;text-align:center;">
+                <p style="font-size:2rem;">🎯</p>
+                <p style="color:var(--text-secondary);">Aucun défi actif pour le moment</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- XP History -->
+        <h2 class="section-title">⚡ Historique XP</h2>
+        <div class="card" style="padding:20px;">
+            <div class="xp-timeline">
+                {% for event in xp_history %}
+                <div class="xp-event">
+                    <div>
+                        <span class="action">{{ event.action }}</span>
+                        <span class="time"> — {{ event.created_at|naturaltime }}</span>
+                    </div>
+                    <span class="amount">+{{ event.xp_earned }} XP</span>
+                </div>
+                {% empty %}
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">Aucun événement XP encore</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'gamification:leaderboard' %}" class="btn btn-outline">🏆 Classement</a>
+            <a href="{% url 'gamification:shop' %}" class="btn btn-primary">🛒 Boutique</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Test d'orientation — PathFinder{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 48px 0 64px;
+    }
+
+    .test-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .test-header h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+    }
+
+    .test-header p {
+        color: var(--text-secondary);
+    }
+
+    .progress-bar {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 32px;
+    }
+
+    .progress-bar .seg {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--bg-card);
+        transition: background 0.3s;
+    }
+
+    .progress-bar .seg.done {
+        background: var(--primary);
+    }
+
+    .question-card {
+        padding: 32px;
+        margin-bottom: 24px;
+        display: none;
+    }
+
+    .question-card.active {
+        display: block;
+    }
+
+    .q-number {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+    }
+
+    .q-text {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .choices {
+        display: grid;
+        gap: 10px;
+    }
+
+    .choice-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .choice-label:hover {
+        border-color: var(--primary);
+        background: rgba(26, 86, 219, 0.03);
+    }
+
+    .choice-label input:checked+.choice-text {
+        font-weight: 600;
+    }
+
+    .choice-label:has(input:checked) {
+        border-color: var(--primary);
+        background: rgba(26, 86, 219, 0.06);
+    }
+
+    .choice-label input[type=radio] {
+        accent-color: var(--primary);
+    }
+
+    .test-nav {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 24px;
+    }
+
+    @media(max-width:768px) {
+        .question-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container" style="max-width:700px;">
+        <div class="test-header">
+            <h1>🧭 Test d'orientation</h1>
+            <p>Répondez à {{ questions|length }} questions pour découvrir votre profil</p>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+            {% for q in questions %}<div class="seg" data-idx="{{ forloop.counter0 }}"></div>{% endfor %}
+        </div>
+
+        <form method="post" id="quizForm">
+            {% csrf_token %}
+            {% for question in questions %}
+            <div class="card question-card {% if forloop.first %}active{% endif %}" data-idx="{{ forloop.counter0 }}">
+                <div class="q-number">Question {{ forloop.counter }} sur {{ questions|length }} {{ question.icon }}
+                </div>
+                <div class="q-text">{{ question.text }}</div>
+                <div class="choices">
+                    {% for choice in question.choices.all %}
+                    <label class="choice-label">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}">
+                        <span class="choice-text">{{ choice.icon }} {{ choice.text }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="test-nav">
+                <button type="button" class="btn btn-outline" id="prevBtn" style="display:none;"
+                    onclick="navigateQuiz(-1)">← Précédent</button>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="navigateQuiz(1)">Suivant →</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="display:none;">Voir mes
+                    résultats 🎯</button>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let current = 0;
+    const cards = document.querySelectorAll('.question-card');
+    const segs = document.querySelectorAll('.progress-bar .seg');
+    const total = cards.length;
+
+    function navigateQuiz(dir) {
+        // Check answer selected for current question
+        if (dir > 0) {
+            const radios = cards[current].querySelectorAll('input[type=radio]');
+            const checked = Array.from(radios).some(r => r.checked);
+            if (!checked) { alert('Veuillez sélectionner une réponse.'); return; }
+        }
+
+        cards[current].classList.remove('active');
+        current = Math.max(0, Math.min(total - 1, current + dir));
+        cards[current].classList.add('active');
+        updateUI();
+    }
+
+    function updateUI() {
+        segs.forEach((s, i) => s.classList.toggle('done', i <= current));
+        document.getElementById('prevBtn').style.display = current > 0 ? '' : 'none';
+        document.getElementById('nextBtn').style.display = current < total - 1 ? '' : 'none';
+        document.getElementById('submitBtn').style.display = current === total - 1 ? '' : 'none';
+    }
+    updateUI();
+
+    // Allow clicking choices to auto-advance
+    document.querySelectorAll('.choice-label input').forEach(radio => {
+        radio.addEventListener('change', () => {
+            setTimeout(() => { if (current < total - 1) navigateQuiz(1); }, 300);
+        });
+    });
+</script>
+{% endblock %}

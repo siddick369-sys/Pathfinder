@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="{% block meta_description %}PathFinder — Transformez vos études en carrière structurée{% endblock %}">
+    <title>{% block title %}PathFinder{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% include "includes/navbar.html" %}
+    {% include "includes/messages.html" %}
+    {% block content %}{% endblock %}
+    {% block footer %}{% include "includes/footer.html" %}{% endblock %}
+    <script src="{% static 'js/shared.js' %}"></script>
+    <script src="{% static 'js/moderation.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Contact — PathFinder{% endblock %}
+{% block content %}
+<main style="padding:48px 0 64px;">
+    <div class="container" style="max-width:600px;">
+        <h1 style="font-size:1.6rem;margin-bottom:8px;text-align:center;">Contactez-nous</h1>
+        <p style="color:var(--text-secondary);text-align:center;margin-bottom:32px;">Une question ? N'hésitez pas à nous
+            écrire.</p>
+        <form id="contact-form" class="card" style="padding:32px;" onsubmit="event.preventDefault();">
+            <div class="form-group">
+                <label class="form-label">Nom complet</label>
+                <input type="text" class="form-input" placeholder="Votre nom" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" placeholder="votre@email.cm" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-input" rows="5" placeholder="Votre message..." style="resize:vertical;"
+                    required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">Envoyer →</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

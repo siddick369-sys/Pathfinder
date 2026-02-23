@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Notifications — PathFinder{% endblock %}
+{% block content %}
+<main style="padding:48px 0 64px;">
+    <div class="container" style="max-width:600px;">
+        <h1 style="font-size:1.4rem;margin-bottom:24px;">🔔 Notifications</h1>
+        {% for n in notifications %}
+        <div class="card"
+            style="padding:16px 20px;margin-bottom:8px;{% if not n.is_read %}border-left:3px solid var(--primary);{% endif %}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <strong style="font-size:0.9rem;">{{ n.title }}</strong>
+                <span style="font-size:0.75rem;color:var(--text-secondary);">{{ n.created_at|timesince }} ago</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">{{ n.message }}</p>
+            {% if n.link %}<a href="{{ n.link }}" style="font-size:0.8rem;color:var(--primary);">Voir →</a>{% endif %}
+        </div>
+        {% empty %}
+        <div class="card" style="padding:40px;text-align:center;">
+            <p style="color:var(--text-secondary);">Aucune notification pour le moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+{% endblock %}

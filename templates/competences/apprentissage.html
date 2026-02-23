@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% block title %}{{ skill.name }} — Apprentissage — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px;
+    }
+
+    .skill-hero {
+        padding: 32px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .skill-hero .left h1 {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
+    }
+
+    .skill-hero .left p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        max-width: 600px;
+    }
+
+    .skill-hero .stats {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .stat-pill {
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .stat-pill.xp {
+        background: rgba(234, 179, 8, 0.1);
+        color: #d97706;
+    }
+
+    .stat-pill.done {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+    }
+
+    .stat-pill.total {
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+    }
+
+    .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 12px;
+    }
+
+    .progress-bar-track {
+        flex: 1;
+        height: 8px;
+        background: var(--bg-card);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        border-radius: 4px;
+        transition: width 0.5s;
+    }
+
+    .progress-pct {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 0.9rem;
+        min-width: 45px;
+    }
+
+    .filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font);
+    }
+
+    .filter-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .resources-grid {
+        display: grid;
+        gap: 16px;
+    }
+
+    .resource-card {
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .resource-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .resource-card.completed {
+        border-left: 3px solid var(--success);
+    }
+
+    .res-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .res-icon.video {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .res-icon.pdf {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .res-icon.tutoriel {
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    .res-icon.lien {
+        background: rgba(168, 85, 247, 0.1);
+    }
+
+    .res-icon.exercice {
+        background: rgba(251, 146, 60, 0.1);
+    }
+
+    .res-icon.mini_formation {
+        background: rgba(26, 86, 219, 0.1);
+    }
+
+    .res-info {
+        flex: 1;
+    }
+
+    .res-info h3 {
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+
+    .res-info p {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
+    .res-meta {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .res-meta .tag {
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+
+    .res-meta .duration {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .res-meta .xp {
+        font-size: 0.75rem;
+        color: #d97706;
+        font-weight: 600;
+    }
+
+    .res-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .check-done {
+        color: var(--success);
+        font-size: 1.3rem;
+    }
+
+    .free-tag {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+    }
+
+    .empty-state .icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    @media(max-width:768px) {
+        .skill-hero {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .resource-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .res-actions {
+            align-self: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <!-- Hero compétence -->
+        <div class="card skill-hero animate-in">
+            <div class="left">
+                <h1>{{ skill.icon }} {{ skill.name }}</h1>
+                <p>{{ skill.description }}</p>
+                <div class="progress-row">
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" style="width:{{ completion_pct }}%;"></div>
+                    </div>
+                    <span class="progress-pct">{{ completion_pct }}%</span>
+                </div>
+            </div>
+            <div class="stats">
+                <span class="stat-pill done">✅ {{ completed_count }}/{{ total_resources }}</span>
+                <span class="stat-pill xp">⚡ {{ progress.current_level }}/{{ skill.max_level }}</span>
+                <span class="stat-pill total">{{ progress.level_label }}</span>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <a href="?type=all" class="filter-btn {% if active_filter == 'all' %}active{% endif %}">📚 Tout</a>
+            <a href="?type=tutoriel" class="filter-btn {% if active_filter == 'tutoriel' %}active{% endif %}">📝
+                Tutoriels</a>
+            <a href="?type=pdf" class="filter-btn {% if active_filter == 'pdf' %}active{% endif %}">📄 PDFs</a>
+            <a href="?type=video" class="filter-btn {% if active_filter == 'video' %}active{% endif %}">🎬 Vidéos</a>
+            <a href="?type=lien" class="filter-btn {% if active_filter == 'lien' %}active{% endif %}">🔗 Liens</a>
+            <a href="?type=exercice" class="filter-btn {% if active_filter == 'exercice' %}active{% endif %}">✏️
+                Exercices</a>
+        </div>
+
+        <!-- Ressources -->
+        <div class="resources-grid">
+            {% for item in resource_data %}
+            <a href="{% url 'competences:resource_detail' slug=skill.slug resource_id=item.resource.id %}"
+                style="text-decoration:none;color:inherit;" class="resource-link"
+                data-type="{{ item.resource.resource_type }}">
+                <div class="card resource-card {% if item.user_progress.completed %}completed{% endif %} animate-in">
+                    {% if item.resource.is_free_preview %}<span class="free-tag">Aperçu gratuit</span>{% endif %}
+                    <div class="res-icon {{ item.resource.resource_type }}">{{ item.resource.type_icon }}</div>
+                    <div class="res-info">
+                        <h3>{{ item.resource.title }}</h3>
+                        {% if item.resource.description %}<p>{{ item.resource.description|truncatewords:20 }}</p>{% endif %}
+                        <div class="res-meta">
+                            <span class="tag"
+                                style="background:{{ item.resource.level_color }}22;color:{{ item.resource.level_color }};">{{ item.resource.get_level_display }}</span>
+                            <span class="tag" style="background:rgba(107,114,128,0.1);color:var(--text-secondary);">{{ item.resource.get_resource_type_display }}</span>
+                            {% if item.resource.duration_minutes %}<span class="duration">⏱️ {{ item.resource.duration_minutes }} min</span>{% endif %}
+                            <span class="xp">+{{ item.resource.xp_reward }} XP</span>
+                        </div>
+                    </div>
+                    <div class="res-actions">
+                        {% if item.user_progress.completed %}
+                        <span class="check-done">✅</span>
+                        {% else %}
+                        <span class="btn btn-primary btn-sm">Commencer →</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card empty-state">
+                <div class="icon">📭</div>
+                <h3>Aucune ressource disponible</h3>
+                <p>Les ressources pour cette compétence seront bientôt ajoutées.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align:center;margin-top:32px;">
+            <a href="{% url 'competences:list' %}" class="btn btn-outline">← Retour aux compétences</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Confirmation — PathFinder{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        min-height: calc(100vh - var(--nav-height) - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+    }
+
+    .confirm-card {
+        background: var(--bg-page);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 48px 40px;
+        max-width: 520px;
+        width: 100%;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--success-light);
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        font-size: 2.5rem;
+        animation: scaleIn 0.5s ease;
+    }
+
+    .confirm-card h1 {
+        font-size: 1.8rem;
+        color: var(--success);
+        margin-bottom: 16px;
+    }
+
+    .confirm-card .desc {
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    .module-unlocked {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 16px 20px;
+        margin-bottom: 32px;
+        text-align: left;
+    }
+
+    .module-unlocked .mod-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-sm);
+        background: rgba(26, 86, 219, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .mod-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .mod-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .confirm-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="confirm-card animate-in">
+        <div class="success-icon">✓</div>
+        <h1>Paiement réussi !</h1>
+        {% if payment %}
+        <p class="desc">
+            {% if payment.step %}
+            L'étape "<strong>{{ payment.step.title }}</strong>" est maintenant débloquée.
+            {% elif payment.skill %}
+            La compétence "<strong>{{ payment.skill.name }}</strong>" est maintenant débloquée.
+            {% elif payment.booster %}
+            Le booster "<strong>{{ payment.booster.name }}</strong>" a été activé.
+            {% endif %}
+            Vous pouvez continuer votre apprentissage dès maintenant.
+        </p>
+        <div class="module-unlocked">
+            <div class="mod-icon">📺</div>
+            <div style="flex:1;">
+                <div class="mod-label">MODULE DÉBLOQUÉ</div>
+                <div class="mod-name">
+                    {% if payment.step %}{{ payment.step.title }}
+                    {% elif payment.skill %}{{ payment.skill.name }}
+                    {% elif payment.booster %}{{ payment.booster.name }}{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="confirm-actions">
+            <a href="{% url 'parcours:career' %}" class="btn btn-primary btn-full btn-lg">Accéder à l'étape</a>
+            <a href="{% url 'accounts:dashboard' %}" style="color:var(--text-secondary);font-size:0.9rem;">Retour au
+                tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

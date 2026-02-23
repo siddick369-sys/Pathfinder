@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ post.title }} — Blog PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb span {
+        color: var(--text-secondary);
+    }
+
+    .article-header {
+        padding: 32px;
+        margin-bottom: 24px;
+    }
+
+    .article-header .cat-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        margin-bottom: 12px;
+    }
+
+    .article-header h1 {
+        font-size: 1.6rem;
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+
+    .article-header .meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .article-content {
+        padding: 32px;
+        margin-bottom: 24px;
+        line-height: 1.8;
+        font-size: 0.95rem;
+    }
+
+    .article-content p {
+        margin-bottom: 16px;
+    }
+
+    .article-content h2 {
+        margin: 24px 0 12px;
+        font-size: 1.2rem;
+    }
+
+    .article-content h3 {
+        margin: 20px 0 10px;
+        font-size: 1.05rem;
+    }
+
+    .article-content blockquote {
+        border-left: 3px solid var(--primary);
+        padding-left: 16px;
+        color: var(--text-secondary);
+        margin: 16px 0;
+    }
+
+    .article-content ul,
+    .article-content ol {
+        margin: 8px 0 16px 24px;
+    }
+
+    .comments-section {
+        padding: 32px;
+    }
+
+    .comments-section h2 {
+        font-size: 1.15rem;
+        margin-bottom: 20px;
+    }
+
+    .comment {
+        display: flex;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .comment:last-child {
+        border-bottom: none;
+    }
+
+    .comment .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .comment .body {
+        flex: 1;
+    }
+
+    .comment .body .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .comment .body .name {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .comment .body .date {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .comment .body .text {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .comment-form {
+        margin-top: 24px;
+    }
+
+    .comment-form textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 0.9rem;
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .comment-form textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .comment-form .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+    }
+
+    .comment-form .xp-hint {
+        font-size: 0.8rem;
+        color: #d97706;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container" style="max-width:800px;">
+        <div class="breadcrumb">
+            <a href="{% url 'blog:list' %}">Blog</a>
+            <span>›</span>
+            <span>{{ post.title|truncatewords:8 }}</span>
+        </div>
+
+        <div class="card article-header animate-in">
+            {% if post.category %}<span class="cat-tag">{{ post.category.name }}</span>{% endif %}
+            <h1>{{ post.title }}</h1>
+            <div class="meta">
+                <span>✍️ {% if post.author %}{{ post.author.first_name }} {{ post.author.last_name }}{% else %}PathFinder{% endif %}</span>
+                <span>📅 {{ post.created_at|naturaltime }}</span>
+                <span>💬 {{ comments.count }} commentaire{{ comments.count|pluralize }}</span>
+            </div>
+        </div>
+
+        <div class="card article-content animate-in">
+            {{ post.content|linebreaks }}
+        </div>
+
+        <div class="card comments-section animate-in">
+            <h2>💬 Commentaires ({{ comments.count }})</h2>
+
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="avatar">{{ comment.user.avatar_initials }}</div>
+                <div class="body">
+                    <div class="top">
+                        <span class="name">{{ comment.user.first_name }} {{ comment.user.last_name }}</span>
+                        <span class="date">{{ comment.created_at|naturaltime }}</span>
+                    </div>
+                    <div class="text">{{ comment.content }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:var(--text-secondary);text-align:center;padding:20px;">Soyez le premier à commenter !</p>
+            {% endfor %}
+
+            {% if user.is_authenticated %}
+            <form method="post" class="comment-form">
+                {% csrf_token %}
+                <textarea name="content" placeholder="Écrivez votre commentaire..." required></textarea>
+                <div class="actions">
+                    <span class="xp-hint">⚡ +15 XP par commentaire</span>
+                    <button type="submit" class="btn btn-primary btn-sm">Commenter</button>
+                </div>
+            </form>
+            {% else %}
+            <p style="text-align:center;margin-top:20px;"><a href="{% url 'accounts:login' %}"
+                    style="color:var(--primary);">Connectez-vous</a> pour commenter.</p>
+            {% endif %}
+        </div>
+
+        <div style="text-align:center;margin-top:24px;">
+            <a href="{% url 'blog:list' %}" class="btn btn-outline">← Retour au blog</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

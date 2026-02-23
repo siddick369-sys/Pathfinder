@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Inscription — PathFinder{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-page {
+        min-height: calc(100vh - var(--nav-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+    }
+
+    .auth-card {
+        max-width: 480px;
+        width: 100%;
+        padding: 40px;
+    }
+
+    .auth-card h1 {
+        font-size: 1.6rem;
+        margin-bottom: 4px;
+    }
+
+    .auth-card .sub {
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+        font-size: 0.9rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .error-list {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        list-style: none;
+        padding: 0;
+    }
+
+    @media(max-width:480px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="card auth-card animate-in">
+        <h1>Créer un compte 🎓</h1>
+        <p class="sub">Rejoignez PathFinder et trouvez votre voie</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% for e in form.first_name.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% for e in form.last_name.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for e in form.email.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">{{ form.filiere.label }}</label>
+                    {{ form.filiere }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{ form.niveau.label }}</label>
+                    {{ form.niveau }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% for e in form.username.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    {{ form.password1 }}
+                    {% for e in form.password1.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirmer</label>
+                    {{ form.password2 }}
+                    {% for e in form.password2.errors %}<p class="error-list">{{ e }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">Créer mon compte
+                →</button>
+        </form>
+
+        <div class="auth-footer">
+            Déjà inscrit ? <a href="{% url 'accounts:login' %}">Se connecter</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

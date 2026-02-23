@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Compétences — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 48px 0 64px;
+    }
+
+    .comp-header {
+        margin-bottom: 32px;
+    }
+
+    .comp-header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+
+    .comp-header p {
+        color: var(--text-secondary);
+    }
+
+    .global-score {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(26, 86, 219, 0.1);
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        color: var(--primary);
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .skill-card {
+        padding: 24px;
+        position: relative;
+    }
+
+    .skill-card.premium {
+        border: 1px solid #f59e0b;
+    }
+
+    .skill-card .skill-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .skill-card .skill-icon {
+        font-size: 1.5rem;
+    }
+
+    .skill-card h3 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+
+    .skill-card p {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .skill-card .level {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .skill-progress {
+        height: 6px;
+        background: var(--bg-card);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .skill-progress .fill {
+        height: 100%;
+        border-radius: 3px;
+        background: var(--primary);
+    }
+
+    .skill-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .premium-badge {
+        background: #fef3c7;
+        color: #d97706;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="comp-header animate-in">
+            <h1>💡 Compétences stratégiques</h1>
+            <p>Développez les compétences clés pour votre carrière</p>
+            <div class="global-score">📊 Score global : {{ global_score }}%</div>
+        </div>
+
+        <div class="skills-grid">
+            {% for item in skill_data %}
+            <div class="card skill-card {% if item.skill.is_premium %}premium{% endif %} animate-in">
+                <div class="skill-header">
+                    <span class="skill-icon">{{ item.skill.icon }}</span>
+                    {% if item.skill.is_premium %}
+                    <span class="premium-badge">🔒 {{ item.skill.price_fcfa }} FCFA</span>
+                    {% else %}
+                    <span class="badge badge-success" style="font-size:0.65rem;">Gratuit</span>
+                    {% endif %}
+                </div>
+                <h3>{{ item.skill.name }}</h3>
+                <p>{{ item.skill.description|truncatewords:15 }}</p>
+
+                {% if item.progress.unlocked %}
+                <div class="level">{{ item.progress.level_label }} — Niveau {{ item.progress.current_level }}/{{ item.skill.max_level }}</div>
+                <div class="skill-progress">
+                    <div class="fill" style="width:{{ item.progress.progress_percent }}%;"></div>
+                </div>
+                <div class="skill-meta">
+                    <span>{{ item.progress.progress_percent|floatformat:0 }}%</span>
+                    <span>{{ item.resources_count }} ressources</span>
+                </div>
+                <a href="{% url 'competences:apprentissage' item.skill.slug %}" class="btn btn-primary btn-sm btn-full"
+                    style="margin-top:12px;">🎓 Apprendre →</a>
+                {% else %}
+                <a href="{% url 'payments:pay' 'skill' item.skill.id %}" class="btn btn-outline btn-sm btn-full"
+                    style="margin-top:8px;">Débloquer cette compétence</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}
