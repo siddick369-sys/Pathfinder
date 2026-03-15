@@ -21,3 +21,6 @@ if not User.objects.filter(username='admin').exists():
 else:
     print('Superuser admin already exists.')
 "
+
+# Seed initial data (orientation quizzes, careers, skills, badges, etc.)
+python manage.py seed_data
