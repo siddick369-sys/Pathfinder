@@ -123,6 +123,28 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 # ── Email (console for dev) ──
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+
+# --- TES IDENTIFIANTS BREVO ---
+# L'identifiant que Brevo t'a donné (celui de ton message)
+EMAIL_HOST_USER = '9f4b2a001@smtp-brevo.com'
+
+# Ta NOUVELLE clé secrète (que tu vas générer, pas celle postée ici)
+EMAIL_HOST_PASSWORD = 'K7VXJCdE8cx3rDmY'
+CSRF_TRUSTED_ORIGINS = [
+        'https://' + (RENDER_EXTERNAL_HOSTNAME or 'iut-connect.onrender.com')
+]
+# --- TRES IMPORTANT ---
+# Ici, mets l'email avec lequel tu as créé le compte Brevo (ex: alexis@gmail.com)
+# C'est l'adresse que les gens verront comme expéditeur.
+DEFAULT_FROM_EMAIL = 'sasukenozel@gmail.com'
+ALLOWED_HOSTS = []
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 # ── Default PK ──
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
