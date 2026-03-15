@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Partager mon témoignage — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .form-hero { text-align: center; margin-bottom: 24px }
+    .form-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .form-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .test-form { max-width: 600px; margin: 0 auto }
+    .test-form .card { padding: 32px }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .form-input:focus { outline: none; border-color: var(--primary) }
+    textarea.form-input { resize: vertical; min-height: 120px }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+    @media(max-width:480px) { .form-row { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>📝 Partager mon témoignage</h1>
+            <p>Inspirez d'autres étudiants avec votre réussite (+25 XP)</p>
+        </div>
+        <div class="test-form">
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Titre</label>
+                        <input type="text" name="title" class="form-input" placeholder="Ex: Comment PathFinder m'a aidé à décrocher un stage" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Type de réussite</label>
+                            <select name="achievement_type" class="form-input">
+                                <option value="emploi">Emploi trouvé</option>
+                                <option value="stage">Stage obtenu</option>
+                                <option value="freelance">Mission freelance</option>
+                                <option value="projet">Projet réussi</option>
+                                <option value="competence">Compétence acquise</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Entreprise (optionnel)</label>
+                            <input type="text" name="company" class="form-input" placeholder="Ex: Orange Cameroun">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Votre témoignage</label>
+                        <textarea name="content" class="form-input" placeholder="Racontez votre parcours et comment PathFinder vous a aidé..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Soumettre mon témoignage →</button>
+                </form>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'blog:testimonials' %}" class="btn btn-outline">← Témoignages</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

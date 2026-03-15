@@ -9,4 +9,6 @@ urlpatterns = [
     path('rgpd/', views.rgpd, name='rgpd'),
     path('faq/', views.faq, name='faq'),
     path('contact/', views.contact, name='contact'),
+    path('offline/', views.offline, name='offline'),
+    path('sw.js', views.service_worker, name='service_worker'),
 ]

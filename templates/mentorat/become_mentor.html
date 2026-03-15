@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Devenir Mentor — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .form-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .form-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .form-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .mentor-form {
+        max-width: 600px;
+        margin: 0 auto
+    }
+
+    .mentor-form .card {
+        padding: 32px
+    }
+
+    .form-group {
+        margin-bottom: 20px
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 6px
+    }
+
+    .form-label small {
+        font-weight: 400;
+        color: var(--text-secondary)
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input, var(--bg-page));
+        font-family: var(--font);
+        font-size: 0.9rem;
+        color: var(--text);
+        box-sizing: border-box
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary)
+    }
+
+    textarea.form-input {
+        resize: vertical;
+        min-height: 100px
+    }
+
+    .benefits {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 24px
+    }
+
+    .benefit {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 0.8rem;
+        color: var(--text-secondary)
+    }
+
+    .benefit .icon {
+        font-size: 1.2rem;
+        flex-shrink: 0
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .benefits {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>🚀 Devenir Mentor PathFinder</h1>
+            <p>Partagez votre expertise et aidez d'autres étudiants à progresser</p>
+        </div>
+
+        <div class="mentor-form">
+            <div class="card animate-in" style="margin-bottom:20px;">
+                <h3 style="font-size:1rem;margin-bottom:16px;">Avantages mentor</h3>
+                <div class="benefits">
+                    <div class="benefit"><span class="icon">💰</span><span>Gagnez des revenus en partageant vos compétences</span></div>
+                    <div class="benefit"><span class="icon">⚡</span><span>+100 XP à l'inscription + XP par session</span></div>
+                    <div class="benefit"><span class="icon">👥</span><span>Créez des groupes d'étude</span></div>
+                    <div class="benefit"><span class="icon">🏅</span><span>Badge "Mentor" exclusif</span></div>
+                </div>
+            </div>
+
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Présentation <small>(décrivez votre parcours, expertise)</small></label>
+                        <textarea name="bio" class="form-input" placeholder="Ex: Étudiant en Master 2 Informatique, spécialisé en développement web. J'ai 3 ans d'expérience en freelance..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Spécialités <small>(séparées par des virgules)</small></label>
+                        <input type="text" name="specialties" class="form-input" placeholder="Ex: Python, React, Marketing digital, Design UI">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Université</label>
+                        <input type="text" name="university" class="form-input" placeholder="Ex: Université de Yaoundé I">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tarif par session de 30 min (FCFA)</label>
+                        <input type="number" name="hourly_rate_fcfa" class="form-input" value="500" min="0" step="100">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">🎓 Créer mon profil mentor</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'mentorat:list' %}" class="btn btn-outline">← Retour</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Postuler — {{ mission.title }} — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .apply-form { max-width: 600px; margin: 0 auto }
+    .apply-form h1 { font-size: 1.4rem; text-align: center; margin-bottom: 24px }
+    .apply-form .card { padding: 32px }
+    .mission-summary { padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.85rem }
+    .mission-summary strong { display: block; margin-bottom: 4px }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .form-input:focus { outline: none; border-color: var(--primary) }
+    textarea.form-input { resize: vertical; min-height: 100px }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="apply-form">
+            <h1>📩 Postuler à cette mission</h1>
+            <div class="card animate-in">
+                <div class="mission-summary">
+                    <strong>{{ mission.title }}</strong>
+                    💰 Budget: {{ mission.budget_fcfa|intcomma }} FCFA · 📅 Deadline: {{ mission.deadline|date:"d/m/Y" }}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Votre message de candidature</label>
+                        <textarea name="message" class="form-input" placeholder="Pourquoi êtes-vous le bon candidat ? Décrivez votre approche..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prix proposé (FCFA)</label>
+                        <input type="number" name="proposed_price_fcfa" class="form-input" value="{{ mission.budget_fcfa }}" min="100" step="100">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Envoyer ma candidature →</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

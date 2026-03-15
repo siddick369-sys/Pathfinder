@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Hors-ligne — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 80px 0;
+        text-align: center
+    }
+
+    .offline-icon {
+        font-size: 4rem;
+        margin-bottom: 24px
+    }
+
+    .offline-title {
+        font-size: 1.6rem;
+        margin-bottom: 12px
+    }
+
+    .offline-text {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        max-width: 500px;
+        margin: 0 auto 24px;
+        line-height: 1.6
+    }
+
+    .offline-tips {
+        max-width: 400px;
+        margin: 0 auto;
+        text-align: left
+    }
+
+    .offline-tips .card {
+        padding: 24px
+    }
+
+    .tip {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 8px 0;
+        font-size: 0.85rem;
+        color: var(--text-secondary)
+    }
+
+    .tip .icon {
+        font-size: 1.2rem;
+        flex-shrink: 0
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="offline-icon">📡</div>
+        <h1 class="offline-title">Vous êtes hors-ligne</h1>
+        <p class="offline-text">
+            Pas de connexion internet détectée. Les pages que vous avez déjà visitées
+            sont disponibles en cache.
+        </p>
+
+        <div class="offline-tips">
+            <div class="card">
+                <h3 style="font-size:0.95rem;margin-bottom:12px;">💡 Conseils</h3>
+                <div class="tip"><span class="icon">📶</span><span>Vérifiez votre connexion Wi-Fi ou données mobiles</span></div>
+                <div class="tip"><span class="icon">🔄</span><span>Les pages visitées récemment sont disponibles en cache</span></div>
+                <div class="tip"><span class="icon">📥</span><span>Quand vous êtes en ligne, visitez vos cours pour les cacher</span></div>
+                <div class="tip"><span class="icon">⚡</span><span>Votre progression sera synchronisée automatiquement</span></div>
+            </div>
+        </div>
+
+        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top:24px;">🔄 Réessayer</button>
+    </div>
+</main>
+{% endblock %}

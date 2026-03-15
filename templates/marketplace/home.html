@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Bourse de Compétences — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .market-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .market-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .market-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .market-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 16px;
+        flex-wrap: wrap
+    }
+
+    .categories {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap
+    }
+
+    .cat-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: var(--font)
+    }
+
+    .cat-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary)
+    }
+
+    .cat-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary)
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+        margin: 32px 0 16px
+    }
+
+    .listings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px
+    }
+
+    .listing-card {
+        padding: 24px;
+        transition: all 0.3s;
+        position: relative
+    }
+
+    .listing-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .listing-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px
+    }
+
+    .listing-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0
+    }
+
+    .listing-author {
+        font-size: 0.8rem
+    }
+
+    .listing-author .name {
+        font-weight: 600
+    }
+
+    .listing-author .level {
+        font-size: 0.7rem;
+        color: var(--text-secondary)
+    }
+
+    .listing-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 6px
+    }
+
+    .listing-card .desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        line-height: 1.5
+    }
+
+    .listing-cat {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        margin-bottom: 8px
+    }
+
+    .listing-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--border)
+    }
+
+    .listing-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary)
+    }
+
+    .listing-price small {
+        font-size: 0.65rem;
+        font-weight: 400;
+        color: var(--text-secondary)
+    }
+
+    .listing-meta {
+        font-size: 0.7rem;
+        color: var(--text-secondary)
+    }
+
+    /* Missions section */
+    .missions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px
+    }
+
+    .mission-card {
+        padding: 24px;
+        transition: all 0.3s;
+        border-left: 3px solid var(--primary)
+    }
+
+    .mission-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .mission-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 6px
+    }
+
+    .mission-card .desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        line-height: 1.5
+    }
+
+    .mission-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap
+    }
+
+    .mission-budget {
+        font-weight: 700;
+        color: var(--primary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .listings-grid,
+        .missions-grid {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="market-hero animate-in">
+            <h1>💼 Bourse de Compétences</h1>
+            <p>Apprenez, pratiquez, gagnez — monétisez vos compétences PathFinder</p>
+            <div class="market-actions">
+                <a href="{% url 'marketplace:create_listing' %}" class="btn btn-primary">📋 Proposer un service</a>
+                <a href="{% url 'marketplace:create_mission' %}" class="btn btn-outline">📝 Poster une mission</a>
+                <a href="{% url 'marketplace:my_services' %}" class="btn btn-outline">👤 Mes services</a>
+            </div>
+        </div>
+
+        {% if categories %}
+        <div class="categories">
+            <a href="{% url 'marketplace:home' %}" class="cat-btn {% if not active_cat %}active{% endif %}">Tous</a>
+            {% for cat in categories %}
+            <a href="{% url 'marketplace:home' %}?cat={{ cat.slug }}"
+                class="cat-btn {% if active_cat == cat.slug %}active{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Services -->
+        <h2 class="section-title">🛠️ Services disponibles</h2>
+        <div class="listings-grid">
+            {% for listing in listings %}
+            <a href="{% url 'marketplace:listing_detail' pk=listing.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="card listing-card animate-in">
+                    <div class="listing-header">
+                        <div class="listing-avatar">{{ listing.provider.avatar_initials }}</div>
+                        <div class="listing-author">
+                            <div class="name">{{ listing.provider.first_name }} {{ listing.provider.last_name }}</div>
+                            <div class="level">{{ listing.provider.level_icon }} {{ listing.provider.level_name }}</div>
+                        </div>
+                    </div>
+                    {% if listing.category %}<span class="listing-cat">{{ listing.category.icon }} {{ listing.category.name }}</span>{% endif %}
+                    <h3>{{ listing.title }}</h3>
+                    <p class="desc">{{ listing.description|truncatewords:20 }}</p>
+                    <div class="listing-footer">
+                        <span class="listing-price">{{ listing.price_fcfa|intcomma }} FCFA</span>
+                        <span class="listing-meta">📦 {{ listing.get_delivery_days_display }} · ⭐ {{ listing.total_orders }} commandes</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">🛠️</p>
+                <h3>Aucun service disponible</h3>
+                <p style="color:var(--text-secondary);">Soyez le premier à proposer vos services !</p>
+                <a href="{% url 'marketplace:create_listing' %}" class="btn btn-primary" style="margin-top:16px;">Proposer un service →</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Missions -->
+        <h2 class="section-title">📋 Missions ouvertes</h2>
+        <div class="missions-grid">
+            {% for mission in missions %}
+            <a href="{% url 'marketplace:mission_detail' pk=mission.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="card mission-card animate-in">
+                    {% if mission.category %}<span class="listing-cat">{{ mission.category.icon }} {{ mission.category.name }}</span>{% endif %}
+                    <h3>{{ mission.title }}</h3>
+                    <p class="desc">{{ mission.description|truncatewords:20 }}</p>
+                    <div class="mission-meta">
+                        <span class="mission-budget">💰 {{ mission.budget_fcfa|intcomma }} FCFA</span>
+                        <span>📅 {{ mission.deadline|date:"d/m/Y" }}</span>
+                        <span>📩 {{ mission.proposals_count }} candidatures</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:40px;text-align:center;">
+                <p style="color:var(--text-secondary);">Aucune mission ouverte pour le moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'marketplace:missions' %}" class="btn btn-outline">📋 Toutes les missions</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

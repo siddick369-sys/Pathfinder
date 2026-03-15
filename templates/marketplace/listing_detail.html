@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ listing.title }} — Marketplace — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .listing-detail {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 24px;
+        max-width: 900px;
+        margin: 0 auto
+    }
+
+    .listing-main .card {
+        padding: 28px;
+        margin-bottom: 20px
+    }
+
+    .listing-main h1 {
+        font-size: 1.4rem;
+        margin-bottom: 8px
+    }
+
+    .listing-main .cat-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary);
+        margin-bottom: 12px
+    }
+
+    .provider-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px
+    }
+
+    .provider-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700
+    }
+
+    .provider-info .name {
+        font-weight: 600;
+        font-size: 0.9rem
+    }
+
+    .provider-info .meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .description {
+        font-size: 0.9rem;
+        line-height: 1.7;
+        color: var(--text-secondary)
+    }
+
+    .sidebar .card {
+        padding: 24px;
+        margin-bottom: 16px
+    }
+
+    .sidebar .price-big {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 4px
+    }
+
+    .sidebar .price-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 16px
+    }
+
+    .sidebar .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .sidebar .detail-row:last-child {
+        border-bottom: none
+    }
+
+    .reviews-section h2 {
+        font-size: 1.1rem;
+        margin-bottom: 16px
+    }
+
+    .review-item {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .review-item:last-child {
+        border-bottom: none
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px
+    }
+
+    .review-author {
+        font-weight: 600;
+        font-size: 0.85rem
+    }
+
+    .review-stars {
+        color: #f59e0b;
+        font-size: 0.85rem
+    }
+
+    .review-text {
+        font-size: 0.8rem;
+        color: var(--text-secondary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .listing-detail {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="listing-detail">
+            <div class="listing-main">
+                <div class="card animate-in">
+                    {% if listing.category %}<span class="cat-tag">{{ listing.category.icon }} {{ listing.category.name }}</span>{% endif %}
+                    <h1>{{ listing.title }}</h1>
+
+                    <div class="provider-row">
+                        <div class="provider-avatar">{{ listing.provider.avatar_initials }}</div>
+                        <div class="provider-info">
+                            <div class="name">{{ listing.provider.first_name }} {{ listing.provider.last_name }}</div>
+                            <div class="meta">{{ listing.provider.level_icon }} {{ listing.provider.level_name }} · {{ listing.provider.total_xp }} XP</div>
+                        </div>
+                    </div>
+
+                    <div class="description">{{ listing.description|linebreaksbr }}</div>
+                </div>
+
+                <div class="card animate-in">
+                    <div class="reviews-section">
+                        <h2>💬 Avis</h2>
+                        {% for review in reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-author">{{ review.reviewer.first_name }}</span>
+                                <span class="review-stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+                            </div>
+                            {% if review.comment %}<p class="review-text">{{ review.comment }}</p>{% endif %}
+                        </div>
+                        {% empty %}
+                        <p style="color:var(--text-secondary);font-size:0.85rem;">Aucun avis.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card animate-in">
+                    <div class="price-big">{{ listing.price_fcfa|intcomma }} FCFA</div>
+                    <div class="price-label">par prestation</div>
+                    <div class="detail-row"><span>Délai</span><strong>{{ listing.get_delivery_days_display }}</strong></div>
+                    <div class="detail-row"><span>Commandes</span><strong>{{ listing.total_orders }}</strong></div>
+                    <div class="detail-row"><span>Note</span><strong>{% if listing.average_rating > 0 %}{{ listing.average_rating }}/5{% else %}—{% endif %}</strong></div>
+                    <a href="{% url 'marketplace:home' %}" class="btn btn-primary btn-full" style="margin-top:16px;">Contacter →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'marketplace:home' %}" class="btn btn-outline">← Marketplace</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

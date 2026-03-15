@@ -16,6 +16,10 @@
                 class="{% if request.resolver_match.app_name == 'parcours' %}active{% endif %}">Parcours</a>
             <a href="{% url 'competences:list' %}"
                 class="{% if request.resolver_match.app_name == 'competences' %}active{% endif %}">Compétences</a>
+            <a href="{% url 'mentorat:list' %}"
+                class="{% if request.resolver_match.app_name == 'mentorat' %}active{% endif %}">Mentorat</a>
+            <a href="{% url 'marketplace:home' %}"
+                class="{% if request.resolver_match.app_name == 'marketplace' %}active{% endif %}">Marketplace</a>
             <a href="{% url 'blog:list' %}"
                 class="{% if request.resolver_match.app_name == 'blog' %}active{% endif %}">Blog</a>
             {% else %}

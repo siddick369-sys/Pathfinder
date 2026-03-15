@@ -67,3 +67,43 @@ class OrientationResult(models.Model):
 
     def __str__(self):
         return f'Résultat de {self.user} — {self.created_at.strftime("%d/%m/%Y")}'
+
+
+class MiniQuiz(models.Model):
+    """Mini-quiz hebdomadaire pour affiner le profil."""
+    text = models.CharField(max_length=500, verbose_name='Question')
+    icon = models.CharField(max_length=10, default='💡')
+    week_number = models.IntegerField(default=1, verbose_name='Semaine N°')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['week_number']
+        verbose_name = 'Mini-quiz'
+        verbose_name_plural = 'Mini-quiz'
+
+    def __str__(self):
+        return f'S{self.week_number}: {self.text[:50]}'
+
+
+class MiniQuizChoice(models.Model):
+    """Choix pour un mini-quiz."""
+    quiz = models.ForeignKey(MiniQuiz, on_delete=models.CASCADE, related_name='choices')
+    text = models.CharField(max_length=300)
+    weights = models.JSONField(default=dict, help_text='Poids par carrière')
+
+    def __str__(self):
+        return f'{self.text[:50]} (S{self.quiz.week_number})'
+
+
+class MiniQuizResponse(models.Model):
+    """Réponse d'un utilisateur à un mini-quiz."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mini_quiz_responses')
+    quiz = models.ForeignKey(MiniQuiz, on_delete=models.CASCADE)
+    choice = models.ForeignKey(MiniQuizChoice, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'quiz']
+        verbose_name = 'Réponse mini-quiz'
+        verbose_name_plural = 'Réponses mini-quiz'

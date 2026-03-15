@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Témoignages — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .test-hero { text-align: center; margin-bottom: 32px }
+    .test-hero h1 { font-size: 1.6rem; margin-bottom: 8px }
+    .test-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px }
+    .testimonial-card { padding: 24px; transition: all 0.3s; position: relative }
+    .testimonial-card:hover { transform: translateY(-2px) }
+    .testimonial-card .type-badge { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.65rem; font-weight: 600; margin-bottom: 12px }
+    .type-emploi { background: rgba(34, 197, 94, 0.12); color: #16a34a }
+    .type-stage { background: rgba(26, 86, 219, 0.1); color: var(--primary) }
+    .type-freelance { background: rgba(234, 179, 8, 0.12); color: #d97706 }
+    .type-projet { background: rgba(139, 92, 246, 0.12); color: #7c3aed }
+    .type-competence { background: rgba(236, 72, 153, 0.12); color: #db2777 }
+    .testimonial-card h3 { font-size: 1rem; margin-bottom: 8px }
+    .testimonial-card .content { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; font-style: italic }
+    .testimonial-footer { display: flex; gap: 12px; align-items: center; padding-top: 12px; border-top: 1px solid var(--border) }
+    .testimonial-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700 }
+    .testimonial-author .name { font-weight: 600; font-size: 0.85rem }
+    .testimonial-author .meta { font-size: 0.7rem; color: var(--text-secondary) }
+    .featured { border: 2px solid var(--success) }
+    .featured::before { content: '⭐ Mis en avant'; position: absolute; top: 12px; right: 12px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full); text-transform: uppercase }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+    @media(max-width:768px) { .testimonials-grid { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="test-hero animate-in">
+            <h1>💬 Témoignages</h1>
+            <p>Des étudiants qui ont réussi grâce à PathFinder</p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'blog:create_testimonial' %}" class="btn btn-primary" style="margin-top:16px;">📝 Partager mon témoignage</a>
+            {% endif %}
+        </div>
+
+        <div class="testimonials-grid">
+            {% for t in testimonials %}
+            <div class="card testimonial-card {% if t.is_featured %}featured{% endif %} animate-in">
+                <span class="type-badge type-{{ t.achievement_type }}">{{ t.get_achievement_type_display }}</span>
+                <h3>{{ t.title }}</h3>
+                <p class="content">"{{ t.content|truncatewords:40 }}"</p>
+                {% if t.company %}<p style="font-size:0.75rem;color:var(--primary);margin-bottom:12px;">🏢 {{ t.company }}</p>{% endif %}
+                <div class="testimonial-footer">
+                    <div class="testimonial-avatar">{{ t.user.avatar_initials }}</div>
+                    <div class="testimonial-author">
+                        <div class="name">{{ t.user.first_name }} {{ t.user.last_name }}</div>
+                        <div class="meta">{{ t.user.level_icon }} {{ t.user.level_name }} · {{ t.created_at|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">💬</p>
+                <h3>Soyez le premier à témoigner !</h3>
+                <p style="color:var(--text-secondary);">Partagez votre réussite et inspirez d'autres étudiants.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'blog:list' %}" class="btn btn-outline">← Blog</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

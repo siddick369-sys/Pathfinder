@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Missions — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .missions-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .missions-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .missions-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .categories {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap
+    }
+
+    .cat-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: var(--font)
+    }
+
+    .cat-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary)
+    }
+
+    .cat-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary)
+    }
+
+    .missions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px
+    }
+
+    .mission-card {
+        padding: 24px;
+        transition: all 0.3s;
+        border-left: 3px solid var(--primary)
+    }
+
+    .mission-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .mission-card h3 {
+        font-size: 1rem;
+        margin-bottom: 8px
+    }
+
+    .mission-card .desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        line-height: 1.5
+    }
+
+    .mission-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+        margin-bottom: 12px
+    }
+
+    .mission-budget {
+        font-weight: 700;
+        color: var(--primary)
+    }
+
+    .mission-client {
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .missions-grid {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="missions-hero animate-in">
+            <h1>📋 Missions ouvertes</h1>
+            <p>Trouvez des missions et mettez vos compétences en pratique</p>
+        </div>
+
+        <div class="categories">
+            <a href="{% url 'marketplace:missions' %}" class="cat-btn {% if not active_cat %}active{% endif %}">Toutes</a>
+            {% for cat in categories %}
+            <a href="{% url 'marketplace:missions' %}?cat={{ cat.slug }}"
+                class="cat-btn {% if active_cat == cat.slug %}active{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="missions-grid">
+            {% for mission in missions %}
+            <a href="{% url 'marketplace:mission_detail' pk=mission.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="card mission-card animate-in">
+                    {% if mission.category %}<span style="display:inline-block;padding:2px 10px;border-radius:var(--radius-full);font-size:0.65rem;font-weight:600;background:rgba(26,86,219,0.1);color:var(--primary);margin-bottom:8px;">{{ mission.category.icon }} {{ mission.category.name }}</span>{% endif %}
+                    <h3>{{ mission.title }}</h3>
+                    <p class="desc">{{ mission.description|truncatewords:25 }}</p>
+                    <div class="mission-meta">
+                        <span class="mission-budget">💰 {{ mission.budget_fcfa|intcomma }} FCFA</span>
+                        <span>📅 Deadline: {{ mission.deadline|date:"d/m/Y" }}</span>
+                        <span>📩 {{ mission.proposals_count }} candidatures</span>
+                    </div>
+                    <p class="mission-client">Par {{ mission.client.first_name }} {{ mission.client.last_name }}</p>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">📋</p>
+                <h3>Aucune mission ouverte</h3>
+                <p style="color:var(--text-secondary);">Soyez le premier à poster une mission !</p>
+                <a href="{% url 'marketplace:create_mission' %}" class="btn btn-primary" style="margin-top:16px;">Poster une mission →</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'marketplace:create_mission' %}" class="btn btn-primary">📝 Poster une mission</a>
+            <a href="{% url 'marketplace:home' %}" class="btn btn-outline">← Marketplace</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

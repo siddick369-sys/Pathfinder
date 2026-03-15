@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Terminer la session — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .complete-form {
+        max-width: 500px;
+        margin: 0 auto
+    }
+
+    .complete-form h1 {
+        font-size: 1.4rem;
+        text-align: center;
+        margin-bottom: 24px
+    }
+
+    .complete-form .card {
+        padding: 32px
+    }
+
+    .session-summary {
+        padding: 16px;
+        background: var(--bg-page);
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px;
+        font-size: 0.85rem
+    }
+
+    .session-summary strong {
+        display: block;
+        margin-bottom: 4px
+    }
+
+    .form-group {
+        margin-bottom: 20px
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 6px
+    }
+
+    .stars-input {
+        display: flex;
+        gap: 8px;
+        font-size: 1.5rem;
+        cursor: pointer
+    }
+
+    .stars-input label {
+        cursor: pointer;
+        transition: transform 0.15s
+    }
+
+    .stars-input label:hover {
+        transform: scale(1.2)
+    }
+
+    .stars-input input {
+        display: none
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input, var(--bg-page));
+        font-family: var(--font);
+        font-size: 0.9rem;
+        color: var(--text);
+        box-sizing: border-box
+    }
+
+    textarea.form-input {
+        resize: vertical;
+        min-height: 80px
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="complete-form">
+            <h1>✅ Terminer la session</h1>
+            <div class="card animate-in">
+                <div class="session-summary">
+                    <strong>{{ session.mentor.user.first_name }} {{ session.mentor.user.last_name }}</strong>
+                    📅 {{ session.date|date:"d/m/Y" }} · 🕐 {{ session.time_slot }} · {{ session.get_session_type_display }}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% if user == session.mentee %}
+                    <div class="form-group">
+                        <label class="form-label">Notez votre mentor</label>
+                        <div class="stars-input" id="starsInput">
+                            {% for i in "12345" %}
+                            <label data-value="{{ forloop.counter }}">
+                                <input type="radio" name="rating" value="{{ forloop.counter }}" {% if forloop.counter == 5 %}checked{% endif %}>
+                                ☆
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Commentaire (optionnel)</label>
+                        <textarea name="comment" class="form-input" placeholder="Comment s'est passée la session ?"></textarea>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary btn-full">Confirmer la fin de session</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('#starsInput label').forEach(label => {
+    label.addEventListener('click', function() {
+        const val = this.dataset.value;
+        this.querySelector('input').checked = true;
+        document.querySelectorAll('#starsInput label').forEach((l, i) => {
+            l.textContent = i < val ? '★' : '☆';
+        });
+    });
+});
+</script>
+{% endblock %}

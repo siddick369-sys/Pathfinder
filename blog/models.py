@@ -51,3 +51,35 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'{self.user} sur {self.post.title[:30]}'
+
+
+class Testimonial(models.Model):
+    """Témoignage d'un étudiant ayant trouvé un stage/emploi grâce à PathFinder."""
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='testimonials')
+    title = models.CharField(max_length=200, verbose_name='Titre')
+    content = models.TextField(verbose_name='Votre témoignage')
+    company = models.CharField(max_length=200, blank=True, verbose_name='Entreprise / Stage')
+    achievement_type = models.CharField(max_length=50, default='emploi', choices=[
+        ('emploi', 'Emploi trouvé'),
+        ('stage', 'Stage obtenu'),
+        ('freelance', 'Mission freelance'),
+        ('projet', 'Projet réussi'),
+        ('competence', 'Compétence acquise'),
+    ])
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    is_featured = models.BooleanField(default=False, verbose_name='Mis en avant')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Témoignage'
+        verbose_name_plural = 'Témoignages'
+
+    def __str__(self):
+        return f'{self.user} — {self.title}'

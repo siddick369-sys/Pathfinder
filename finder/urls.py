@@ -19,6 +19,9 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('notifications/', include('notifications.urls')),
     path('feedback/', include('feedback.urls')),
+    path('mentorat/', include('mentorat.urls')),
+    path('marketplace/', include('marketplace.urls')),
+    path('whatsapp/', include('whatsapp_bot.urls')),
 ]
 
 if settings.DEBUG:

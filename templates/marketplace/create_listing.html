@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Proposer un service — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .form-hero {
+        text-align: center;
+        margin-bottom: 24px
+    }
+
+    .form-hero h1 {
+        font-size: 1.4rem;
+        margin-bottom: 8px
+    }
+
+    .form-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .create-form {
+        max-width: 600px;
+        margin: 0 auto
+    }
+
+    .create-form .card {
+        padding: 32px
+    }
+
+    .form-group {
+        margin-bottom: 20px
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 6px
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input, var(--bg-page));
+        font-family: var(--font);
+        font-size: 0.9rem;
+        color: var(--text);
+        box-sizing: border-box
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary)
+    }
+
+    textarea.form-input {
+        resize: vertical;
+        min-height: 120px
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:480px) {
+        .form-row {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>📋 Proposer un service</h1>
+            <p>Monétisez vos compétences PathFinder</p>
+        </div>
+
+        <div class="create-form">
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Titre du service</label>
+                        <input type="text" name="title" class="form-input" placeholder="Ex: Création de logo professionnel" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description détaillée</label>
+                        <textarea name="description" class="form-input" placeholder="Décrivez ce que vous proposez, votre expérience, ce qui est inclus..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie</label>
+                            <select name="category" class="form-input">
+                                <option value="">— Choisir —</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prix (FCFA)</label>
+                            <input type="number" name="price_fcfa" class="form-input" value="1000" min="100" step="100">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Délai de livraison</label>
+                        <select name="delivery_days" class="form-input">
+                            <option value="1">1 jour</option>
+                            <option value="3" selected>3 jours</option>
+                            <option value="7">1 semaine</option>
+                            <option value="14">2 semaines</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Publier le service →</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'marketplace:home' %}" class="btn btn-outline">← Marketplace</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

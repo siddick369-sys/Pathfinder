@@ -154,3 +154,85 @@ class UserBooster(models.Model):
         if self.expires_at is None:
             return False
         return timezone.now() > self.expires_at
+
+
+class Referral(models.Model):
+    """Système de parrainage — inviter un ami = XP pour les deux."""
+    referrer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='referrals_sent')
+    referred = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='referrals_received')
+    referral_code = models.CharField(max_length=20)
+    xp_awarded = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['referrer', 'referred']
+        verbose_name = 'Parrainage'
+        verbose_name_plural = 'Parrainages'
+
+    def __str__(self):
+        return f'{self.referrer} → {self.referred}'
+
+
+class UserStreak(models.Model):
+    """Suivi des jours consécutifs de connexion."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='streak')
+    current_streak = models.IntegerField(default=0, verbose_name='Jours consécutifs actuels')
+    longest_streak = models.IntegerField(default=0, verbose_name='Plus longue série')
+    last_activity_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Série de connexion'
+        verbose_name_plural = 'Séries de connexion'
+
+    def __str__(self):
+        return f'{self.user} — {self.current_streak} jours'
+
+    def update_streak(self):
+        """Met à jour le streak lors d'une connexion."""
+        today = timezone.now().date()
+        if self.last_activity_date == today:
+            return  # Déjà compté aujourd'hui
+
+        if self.last_activity_date and (today - self.last_activity_date).days == 1:
+            self.current_streak += 1
+        elif self.last_activity_date and (today - self.last_activity_date).days > 1:
+            self.current_streak = 1
+        else:
+            self.current_streak = 1
+
+        if self.current_streak > self.longest_streak:
+            self.longest_streak = self.current_streak
+
+        self.last_activity_date = today
+        self.save()
+
+        # Bonus streaks
+        bonus_xp = 0
+        if self.current_streak == 7:
+            bonus_xp = 50
+        elif self.current_streak == 30:
+            bonus_xp = 200
+        elif self.current_streak == 100:
+            bonus_xp = 500
+
+        if bonus_xp > 0:
+            self.user.add_xp(bonus_xp, action=f'streak_{self.current_streak}_jours')
+
+        return self.current_streak
+
+
+class XPDiscount(models.Model):
+    """Réduction obtenue en échangeant de l'XP."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='xp_discounts')
+    xp_spent = models.IntegerField(verbose_name='XP dépensés')
+    discount_fcfa = models.IntegerField(verbose_name='Réduction (FCFA)')
+    is_used = models.BooleanField(default=False)
+    discount_code = models.CharField(max_length=20, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Réduction XP'
+        verbose_name_plural = 'Réductions XP'
+
+    def __str__(self):
+        return f'{self.user} — {self.discount_fcfa} FCFA ({"Utilisé" if self.is_used else "Disponible"})'

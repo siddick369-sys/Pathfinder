@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Mes Sessions — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .sessions-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .sessions-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .sessions-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .sessions-list {
+        max-width: 700px;
+        margin: 0 auto
+    }
+
+    .session-item {
+        padding: 20px 24px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px
+    }
+
+    .session-info {
+        flex: 1
+    }
+
+    .session-info h3 {
+        font-size: 0.95rem;
+        margin-bottom: 4px
+    }
+
+    .session-meta {
+        font-size: 0.8rem;
+        color: var(--text-secondary)
+    }
+
+    .session-meta span {
+        margin-right: 12px
+    }
+
+    .session-status {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: var(--radius-full)
+    }
+
+    .status-pending {
+        background: rgba(234, 179, 8, 0.12);
+        color: #d97706
+    }
+
+    .status-confirmed {
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary)
+    }
+
+    .status-completed {
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a
+    }
+
+    .status-cancelled {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626
+    }
+
+    .session-actions {
+        display: flex;
+        gap: 8px
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="sessions-hero animate-in">
+            <h1>📅 Mes Sessions de Mentorat</h1>
+            <p>Suivez vos sessions passées et à venir</p>
+        </div>
+
+        <div class="sessions-list">
+            {% for session in sessions %}
+            <div class="card session-item animate-in">
+                <div class="session-info">
+                    <h3>{{ session.mentor.user.first_name }} {{ session.mentor.user.last_name }}</h3>
+                    <div class="session-meta">
+                        <span>📅 {{ session.date|date:"d/m/Y" }}</span>
+                        <span>🕐 {{ session.time_slot }}</span>
+                        <span>{{ session.get_session_type_display }}</span>
+                        {% if session.is_free_intro %}<span style="color:#16a34a;">🎁 Gratuit</span>
+                        {% else %}<span>💰 {{ session.price_fcfa }} FCFA</span>{% endif %}
+                    </div>
+                    {% if session.topic %}<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;">{{ session.topic }}</p>{% endif %}
+                </div>
+                <div class="session-actions">
+                    <span class="session-status status-{{ session.status }}">{{ session.get_status_display }}</span>
+                    {% if session.status == 'confirmed' or session.status == 'pending' %}
+                    <a href="{% url 'mentorat:complete_session' session_id=session.pk %}" class="btn btn-primary btn-sm">Terminer</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="card" style="padding:60px;text-align:center;">
+                <p style="font-size:3rem;">📅</p>
+                <h3>Aucune session</h3>
+                <p style="color:var(--text-secondary);">Réservez votre première session avec un mentor !</p>
+                <a href="{% url 'mentorat:list' %}" class="btn btn-primary" style="margin-top:16px;">Trouver un mentor →</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'mentorat:list' %}" class="btn btn-outline">🎓 Mentors</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

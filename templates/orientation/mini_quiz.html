@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Mini-Quiz — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .quiz-hero { text-align: center; margin-bottom: 32px }
+    .quiz-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .quiz-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .quiz-hero .xp-badge { display: inline-block; padding: 6px 16px; border-radius: var(--radius-full); background: rgba(234, 179, 8, 0.12); color: #d97706; font-weight: 600; font-size: 0.8rem; margin-top: 8px }
+    .quiz-form { max-width: 600px; margin: 0 auto }
+    .quiz-card { padding: 24px; margin-bottom: 16px }
+    .quiz-card .question-icon { font-size: 1.5rem; margin-bottom: 8px; display: block }
+    .quiz-card h3 { font-size: 1rem; margin-bottom: 16px }
+    .choice-list { display: flex; flex-direction: column; gap: 8px }
+    .choice-label { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85rem; transition: all 0.2s }
+    .choice-label:hover { border-color: var(--primary) }
+    .choice-label:has(input:checked) { border-color: var(--primary); background: rgba(26, 86, 219, 0.06) }
+    .choice-label input { accent-color: var(--primary) }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="quiz-hero animate-in">
+            <h1>💡 Mini-Quiz Hebdomadaire</h1>
+            <p>3 questions rapides pour affiner votre profil</p>
+            <span class="xp-badge">⚡ +20 XP à la fin</span>
+        </div>
+
+        <div class="quiz-form">
+            <form method="post">
+                {% csrf_token %}
+                {% for quiz in quizzes %}
+                <div class="card quiz-card animate-in">
+                    <span class="question-icon">{{ quiz.icon }}</span>
+                    <h3>{{ quiz.text }}</h3>
+                    <div class="choice-list">
+                        {% for choice in quiz.choices.all %}
+                        <label class="choice-label">
+                            <input type="radio" name="mini_quiz_{{ quiz.id }}" value="{{ choice.id }}" required>
+                            {{ choice.text }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary btn-full">Valider mes réponses →</button>
+            </form>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'orientation:results' %}" class="btn btn-outline">← Mes résultats</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     'feedback',
     'notifications',
     'core',
+    'mentorat',
+    'marketplace',
+    'whatsapp_bot',
 ]
 
 # ── Auth ──
