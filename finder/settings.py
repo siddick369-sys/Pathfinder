@@ -135,9 +135,7 @@ EMAIL_HOST_USER = '9f4b2a001@smtp-brevo.com'
 
 # Ta NOUVELLE clé secrète (que tu vas générer, pas celle postée ici)
 EMAIL_HOST_PASSWORD = 'K7VXJCdE8cx3rDmY'
-CSRF_TRUSTED_ORIGINS = [
-        'https://' + (RENDER_EXTERNAL_HOSTNAME or 'iut-connect.onrender.com')
-]
+
 # --- TRES IMPORTANT ---
 # Ici, mets l'email avec lequel tu as créé le compte Brevo (ex: alexis@gmail.com)
 # C'est l'adresse que les gens verront comme expéditeur.
@@ -146,5 +144,8 @@ ALLOWED_HOSTS = []
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+CSRF_TRUSTED_ORIGINS = [
+        'https://' + (RENDER_EXTERNAL_HOSTNAME or 'iut-connect.onrender.com')
+]
 # ── Default PK ──
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
