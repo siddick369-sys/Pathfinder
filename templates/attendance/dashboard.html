@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mes Présences — AMN{% endblock %}
+
+{% block extra_css %}
+<style>
+.att-header { background: linear-gradient(135deg, #1a3a5c 0%, #198754 100%); color: white; padding: 2rem 0; margin-bottom: 2rem; }
+.att-stat { background: white; border-radius: 12px; padding: 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.att-stat .num { font-size: 2rem; font-weight: 700; }
+.att-stat .lbl { font-size: 0.78rem; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; }
+.checkin-box { background: white; border-radius: 14px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.status-present { color: #198754; }
+.status-late { color: #fd7e14; }
+.status-absent { color: #dc3545; }
+.status-remote { color: #0dcaf0; }
+.status-on_leave, .status-sick { color: #6c757d; }
+.record-row { padding: 0.7rem 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 0.8rem; }
+.record-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="att-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 style="font-size:1.8rem;font-weight:700;">📅 Mes Présences</h1>
+                <p style="opacity:0.9;">{{ current_month_name }} {{ current_year }} — Africa Mobile Network</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'attendance:history' %}" class="btn btn-outline-light btn-sm me-2">📊 Historique</a>
+                <a href="{% url 'attendance:my_leaves' %}" class="btn btn-outline-light btn-sm">
+                    🏖️ Congés
+                    {% if pending_leaves %}<span class="badge bg-danger ms-1">{{ pending_leaves }}</span>{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Pointage du jour -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="checkin-box">
+                <h5 class="mb-3">⏰ Pointage — {{ today|date:"l d/m/Y" }}</h5>
+                {% if today_record %}
+                <div class="d-flex gap-2 mb-3">
+                    <div class="text-center flex-fill p-2 rounded" style="background:#d1fae5;">
+                        <div style="font-size:0.75rem;color:#6c757d;">Arrivée</div>
+                        <div style="font-weight:700;font-size:1.1rem;">
+                            {% if today_record.check_in %}{{ today_record.check_in|time:"H:i" }}{% else %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="text-center flex-fill p-2 rounded" style="background:#e0f2fe;">
+                        <div style="font-size:0.75rem;color:#6c757d;">Départ</div>
+                        <div style="font-weight:700;font-size:1.1rem;">
+                            {% if today_record.check_out %}{{ today_record.check_out|time:"H:i" }}{% else %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="text-center flex-fill p-2 rounded" style="background:#fef3c7;">
+                        <div style="font-size:0.75rem;color:#6c757d;">Heures</div>
+                        <div style="font-weight:700;font-size:1.1rem;">{{ today_record.duration_display }}</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-{% if today_record.status == 'present' %}success{% elif today_record.status == 'late' %}warning{% elif today_record.status == 'absent' %}danger{% else %}secondary{% endif %} fs-6">
+                        {{ today_record.get_status_display }}
+                    </span>
+                </div>
+                {% if not today_record.check_out %}
+                <a href="{% url 'attendance:checkout' %}" class="btn btn-outline-danger w-100">
+                    👋 Pointer le départ
+                </a>
+                {% endif %}
+                {% else %}
+                <p class="text-muted" style="font-size:0.9rem;">Vous n'avez pas encore pointé aujourd'hui.</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'attendance:checkin' %}" class="btn btn-success btn-lg">
+                        ✅ Pointer mon arrivée
+                    </a>
+                    <a href="{% url 'attendance:leave_request' %}" class="btn btn-outline-secondary btn-sm">
+                        📋 Demander un congé
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stats du mois -->
+        <div class="col-md-7">
+            <div class="row g-3 h-100">
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#198754;">{{ present_count }}</div>
+                        <div class="lbl">Jours présents</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#fd7e14;">{{ late_count }}</div>
+                        <div class="lbl">Retards</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#dc3545;">{{ absent_count }}</div>
+                        <div class="lbl">Absences</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#0d6efd;">{{ attendance_rate }}%</div>
+                        <div class="lbl">Taux de présence</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#6c757d;">{{ total_hours }}h</div>
+                        <div class="lbl">Heures travaillées</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="att-stat">
+                        <div class="num" style="color:#198754;">+{{ overtime }}h</div>
+                        <div class="lbl">Heures sup.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de progression mensuelle -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-1">
+                <span style="font-size:0.9rem;font-weight:600;">Progression du mois ({{ working_days }} jours ouvrables)</span>
+                <span style="font-weight:700;color:#0d6efd;">{{ attendance_rate }}%</span>
+            </div>
+            <div class="progress" style="height:12px;">
+                <div class="progress-bar bg-success" style="width:{% widthratio present_count working_days 100 %}%" title="Présent"></div>
+                <div class="progress-bar bg-warning" style="width:{% widthratio late_count working_days 100 %}%" title="Retard"></div>
+                <div class="progress-bar bg-danger" style="width:{% widthratio absent_count working_days 100 %}%" title="Absent"></div>
+            </div>
+            <div class="d-flex gap-3 mt-2" style="font-size:0.75rem;">
+                <span><span style="color:#198754;">■</span> Présent</span>
+                <span><span style="color:#ffc107;">■</span> Retard</span>
+                <span><span style="color:#dc3545;">■</span> Absent</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Récents -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span style="font-weight:600;">🗓️ Dernières présences</span>
+            <a href="{% url 'attendance:history' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+        </div>
+        <div class="card-body p-0">
+            {% for rec in records %}
+            <div class="record-row px-3">
+                <div style="min-width:100px;font-size:0.85rem;font-weight:600;">{{ rec.date|date:"D d/m" }}</div>
+                <span class="badge bg-{% if rec.status == 'present' %}success{% elif rec.status == 'late' %}warning{% elif rec.status == 'absent' %}danger{% elif rec.status == 'remote' %}info{% else %}secondary{% endif %}">
+                    {{ rec.get_status_display }}
+                </span>
+                <div style="flex:1;font-size:0.8rem;color:#6c757d;">
+                    {% if rec.check_in %}{{ rec.check_in|time:"H:i" }} → {% if rec.check_out %}{{ rec.check_out|time:"H:i" }}{% else %}...{% endif %}{% endif %}
+                </div>
+                <div style="font-size:0.85rem;font-weight:600;">{{ rec.duration_display }}</div>
+                {% if rec.location %}<div style="font-size:0.75rem;color:#6c757d;">📍 {{ rec.location }}</div>{% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-muted">Aucun enregistrement ce mois-ci.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

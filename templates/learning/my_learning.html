@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mon apprentissage — AMN Formation{% endblock %}
+
+{% block extra_css %}
+<style>
+.learning-header { background: linear-gradient(135deg, #1a3a5c 0%, #0d6efd 100%); color: white; padding: 2rem 0; margin-bottom: 2rem; }
+.tab-nav { display: flex; gap: 0.5rem; border-bottom: 2px solid #e9ecef; margin-bottom: 1.5rem; }
+.tab-nav a { padding: 0.5rem 1rem; text-decoration: none; color: #6c757d; font-size: 0.9rem; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.tab-nav a.active { color: #0d6efd; border-bottom-color: #0d6efd; font-weight: 600; }
+.enroll-row {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+.cert-card { background: linear-gradient(135deg, #ffd700, #ff8c00); color: white; border-radius: 10px; padding: 1.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-header">
+    <div class="container">
+        <h1 style="font-size:1.8rem;font-weight:700;">🎓 Mon Apprentissage</h1>
+        <p style="opacity:0.9;">Suivez votre progression dans les formations AMN.</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Stats rapides -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="text-center p-3 bg-white rounded shadow-sm">
+                <div style="font-size:1.8rem;font-weight:700;color:#0d6efd;">{{ in_progress.count }}</div>
+                <div style="font-size:0.8rem;color:#6c757d;">En cours</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-3 bg-white rounded shadow-sm">
+                <div style="font-size:1.8rem;font-weight:700;color:#198754;">{{ completed.count }}</div>
+                <div style="font-size:0.8rem;color:#6c757d;">Terminés</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-3 bg-white rounded shadow-sm">
+                <div style="font-size:1.8rem;font-weight:700;color:#fd7e14;">{{ enrolled.count }}</div>
+                <div style="font-size:0.8rem;color:#6c757d;">À commencer</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-3 bg-white rounded shadow-sm">
+                <div style="font-size:1.8rem;font-weight:700;color:#ffc107;">{{ certificates.count }}</div>
+                <div style="font-size:0.8rem;color:#6c757d;">Certificats</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- En cours -->
+    {% if in_progress %}
+    <h5 class="mb-3">▶️ En cours</h5>
+    {% for e in in_progress %}
+    <div class="enroll-row">
+        <div style="font-size:2rem;">{% if e.module.department %}{{ e.module.department.icon }}{% else %}📱{% endif %}</div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;">{{ e.module.title }}</div>
+            <div style="font-size:0.8rem;color:#6c757d;">Module {{ e.module.number }} • {{ e.module.get_level_display }}</div>
+            <div class="progress mt-1" style="height:6px;">
+                <div class="progress-bar bg-primary" style="width:{{ e.progress_percent }}%"></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <div style="font-weight:700;color:#0d6efd;">{{ e.progress_percent|floatformat:0 }}%</div>
+            <a href="{% url 'learning:module_detail' slug=e.module.slug %}" class="btn btn-sm btn-primary mt-1">Continuer</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Terminés -->
+    {% if completed %}
+    <h5 class="mb-3 mt-4">✅ Terminés</h5>
+    {% for e in completed %}
+    <div class="enroll-row">
+        <div style="font-size:2rem;">🏆</div>
+        <div style="flex:1;">
+            <div style="font-weight:600;">{{ e.module.title }}</div>
+            <div style="font-size:0.8rem;color:#6c757d;">Terminé le {{ e.completed_at|date:"d/m/Y" }}</div>
+        </div>
+        <a href="{% url 'learning:module_detail' slug=e.module.slug %}" class="btn btn-sm btn-outline-success">Revoir</a>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Certificats -->
+    {% if certificates %}
+    <h5 class="mb-3 mt-4">🏅 Mes certificats</h5>
+    <div class="row g-3">
+        {% for cert in certificates %}
+        <div class="col-md-6 col-lg-4">
+            <div class="cert-card">
+                <div style="font-size:2rem;">🏅</div>
+                <div style="font-weight:700;font-size:1rem;">{{ cert.module.title }}</div>
+                <div style="font-size:0.8rem;opacity:0.9;">N° {{ cert.certificate_number }}</div>
+                <div style="font-size:0.8rem;opacity:0.9;">Émis le {{ cert.issued_at|date:"d/m/Y" }}</div>
+                <a href="{% url 'learning:certificate' cert_number=cert.certificate_number %}" class="btn btn-sm btn-light mt-2">Voir le certificat</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not enrollments %}
+    <div class="text-center py-5">
+        <p style="font-size:3rem;">📚</p>
+        <p class="text-muted">Vous n'êtes inscrit à aucune formation pour le moment.</p>
+        <a href="{% url 'learning:list' %}" class="btn btn-primary">Découvrir les formations</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

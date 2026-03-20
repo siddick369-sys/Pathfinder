@@ -19,6 +19,8 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('notifications/', include('notifications.urls')),
     path('feedback/', include('feedback.urls')),
+    path('formations/', include('learning.urls')),
+    path('presences/', include('attendance.urls')),
 ]
 
 if settings.DEBUG:

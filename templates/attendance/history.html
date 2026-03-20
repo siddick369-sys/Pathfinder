@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Historique présences — AMN{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <a href="{% url 'attendance:dashboard' %}" style="font-size:0.85rem;color:#6c757d;">← Tableau de bord</a>
+    <h2 class="mt-1 mb-4">📊 Historique des présences — {{ month_name }} {{ selected_year }}</h2>
+
+    <!-- Filtres -->
+    <form method="get" class="d-flex gap-2 mb-4 flex-wrap">
+        <select name="month" class="form-select form-select-sm" style="width:auto;">
+            {% for num, name in months %}
+            <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <select name="year" class="form-select form-select-sm" style="width:auto;">
+            {% for y in years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+    </form>
+
+    <!-- Résumé -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#198754;font-size:1.4rem;">{{ summary.present }}</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Présents</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#fd7e14;font-size:1.4rem;">{{ summary.late }}</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Retards</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#dc3545;font-size:1.4rem;">{{ summary.absent }}</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Absences</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#6c757d;font-size:1.4rem;">{{ summary.leave }}</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Congés</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#0d6efd;font-size:1.4rem;">{{ summary.total_hours }}h</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Heures</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="text-center p-2 bg-white rounded shadow-sm">
+                <div style="font-weight:700;color:#198754;font-size:1.4rem;">+{{ summary.overtime }}h</div>
+                <div style="font-size:0.75rem;color:#6c757d;">Heures sup.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Arrivée</th>
+                        <th>Départ</th>
+                        <th>Heures</th>
+                        <th>Heures sup.</th>
+                        <th>Lieu</th>
+                        <th>Remarques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr>
+                        <td style="font-weight:600;">{{ rec.date|date:"D d/m" }}</td>
+                        <td>
+                            <span class="badge bg-{% if rec.status == 'present' %}success{% elif rec.status == 'late' %}warning{% elif rec.status == 'absent' %}danger{% elif rec.status == 'remote' %}info{% else %}secondary{% endif %}">
+                                {{ rec.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{% if rec.check_in %}{{ rec.check_in|time:"H:i" }}{% else %}—{% endif %}</td>
+                        <td>{% if rec.check_out %}{{ rec.check_out|time:"H:i" }}{% else %}—{% endif %}</td>
+                        <td>{{ rec.duration_display }}</td>
+                        <td>{% if rec.overtime_hours > 0 %}+{{ rec.overtime_hours }}h{% else %}—{% endif %}</td>
+                        <td style="font-size:0.85rem;">{{ rec.location|default:"—" }}</td>
+                        <td style="font-size:0.8rem;color:#6c757d;">{{ rec.notes|default:""|truncatechars:40 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">Aucun enregistrement pour cette période.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

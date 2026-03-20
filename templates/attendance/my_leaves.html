@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Mes congés — AMN{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'attendance:dashboard' %}" style="font-size:0.85rem;color:#6c757d;">← Retour aux présences</a>
+            <h2 class="mt-1 mb-0">🏖️ Mes demandes de congé</h2>
+        </div>
+        <a href="{% url 'attendance:leave_request' %}" class="btn btn-primary">+ Nouvelle demande</a>
+    </div>
+
+    {% if leaves %}
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Type</th>
+                        <th>Période</th>
+                        <th>Durée</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th>Demandé le</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr>
+                        <td>{{ leave.get_leave_type_display }}</td>
+                        <td>{{ leave.start_date|date:"d/m/Y" }} → {{ leave.end_date|date:"d/m/Y" }}</td>
+                        <td>{{ leave.duration_days }} j.</td>
+                        <td style="max-width:200px;font-size:0.85rem;">{{ leave.reason|truncatechars:60 }}</td>
+                        <td>
+                            <span class="badge bg-{{ leave.status_color }}">{{ leave.get_status_display }}</span>
+                            {% if leave.review_comment %}
+                            <div style="font-size:0.75rem;color:#6c757d;margin-top:2px;">{{ leave.review_comment|truncatechars:40 }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.85rem;">{{ leave.created_at|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p style="font-size:3rem;">🏖️</p>
+        <p class="text-muted">Aucune demande de congé pour le moment.</p>
+        <a href="{% url 'attendance:leave_request' %}" class="btn btn-primary">Faire une demande</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
