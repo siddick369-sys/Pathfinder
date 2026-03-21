@@ -1,416 +1,392 @@
 """
-inventory/models.py
-Module 3 AMN Employee Hub — Gestion d'Actifs, Stock Global & Helpdesk
+Modèles du Module 3 — Inventaire, Stock Global & Helpdesk.
+AMN Employee Hub.
 """
-from django.db import models
+
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
-# ──────────────────────────────────────────────
-# ASSETS INDIVIDUELS
-# ──────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# CHOICES
+# ─────────────────────────────────────────────────────────────────────────────
 
-class AssetCategory(models.Model):
-    """Catégorie de matériel (PC, Téléphone, Mobilier…)."""
-    name = models.CharField(_('Nom'), max_length=100)
-    icon = models.CharField(max_length=10, default='📦')
-    description = models.CharField(max_length=255, blank=True)
+class AssetCategory(models.TextChoices):
+    LAPTOP      = 'LAPTOP',     _('Laptop / Ordinateur portable')
+    DESKTOP     = 'DESKTOP',    _('Desktop / Ordinateur fixe')
+    PHONE       = 'PHONE',      _('Téléphone mobile')
+    TABLET      = 'TABLET',     _('Tablette')
+    MONITOR     = 'MONITOR',    _('Écran / Moniteur')
+    KEYBOARD    = 'KEYBOARD',   _('Clavier')
+    MOUSE       = 'MOUSE',      _('Souris')
+    HEADSET     = 'HEADSET',    _('Casque audio')
+    BADGE       = 'BADGE',      _('Badge / Carte d\'accès')
+    OTHER       = 'OTHER',      _('Autre équipement')
 
-    class Meta:
-        verbose_name = _('Catégorie d\'actif')
-        verbose_name_plural = _('Catégories d\'actif')
-        ordering = ['name']
 
-    def __str__(self):
-        return f'{self.icon} {self.name}'
+class AssetStatus(models.TextChoices):
+    AVAILABLE   = 'AVAILABLE',  _('Disponible')
+    ASSIGNED    = 'ASSIGNED',   _('Assigné')
+    IN_REPAIR   = 'IN_REPAIR',  _('En réparation')
+    LOST        = 'LOST',       _('Perdu / Volé')
+    RETIRED     = 'RETIRED',    _('Mis au rebut')
 
+
+class TransactionType(models.TextChoices):
+    IN   = 'IN',   _('Entrée de stock')
+    OUT  = 'OUT',  _('Sortie de stock')
+
+
+class TicketPriority(models.TextChoices):
+    LOW      = 'LOW',    _('Basse')
+    MEDIUM   = 'MEDIUM', _('Moyenne')
+    HIGH     = 'HIGH',   _('Haute')
+    CRITICAL = 'SOS',    _('SOS — Critique')
+
+
+class TicketStatus(models.TextChoices):
+    OPEN        = 'OPEN',       _('Ouvert')
+    IN_PROGRESS = 'IN_PROGRESS', _('En cours')
+    RESOLVED    = 'RESOLVED',   _('Résolu')
+    CLOSED      = 'CLOSED',     _('Fermé')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ASSET — Matériel individuel assigné à un employé
+# ─────────────────────────────────────────────────────────────────────────────
 
 class Asset(models.Model):
-    """Actif individuel assigné à un employé."""
-    STATUS_CHOICES = [
-        ('available', _('Disponible')),
-        ('assigned', _('Assigné')),
-        ('maintenance', _('En maintenance')),
-        ('retired', _('Mis hors service')),
-        ('lost', _('Perdu / Volé')),
-    ]
+    """Équipement individuel tracé par tag AMN."""
 
     amn_tag = models.CharField(
-        _('Tag AMN'), max_length=50, unique=True,
-        help_text=_('Identifiant unique AMN (ex: AMN-PC-0042)')
+        max_length=30,
+        unique=True,
+        verbose_name=_('Tag AMN'),
+        help_text=_('Identifiant unique de l\'équipement (ex: AMN-LT-001)')
     )
-    name = models.CharField(_('Désignation'), max_length=200)
-    category = models.ForeignKey(
-        AssetCategory, on_delete=models.SET_NULL, null=True,
-        related_name='assets', verbose_name=_('Catégorie')
+
+    category = models.CharField(
+        max_length=20,
+        choices=AssetCategory.choices,
+        default=AssetCategory.OTHER,
+        verbose_name=_('Catégorie')
     )
-    brand = models.CharField(_('Marque'), max_length=100, blank=True)
-    model = models.CharField(_('Modèle'), max_length=100, blank=True)
-    serial_number = models.CharField(_('N° Série'), max_length=100, blank=True)
+
+    brand = models.CharField(
+        max_length=60,
+        verbose_name=_('Marque / Modèle')
+    )
+
+    serial_number = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_('Numéro de série')
+    )
+
     status = models.CharField(
-        _('Statut'), max_length=20, choices=STATUS_CHOICES, default='available'
+        max_length=20,
+        choices=AssetStatus.choices,
+        default=AssetStatus.AVAILABLE,
+        verbose_name=_('Statut')
     )
+
     assigned_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='assigned_assets',
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assets',
         verbose_name=_('Assigné à')
     )
-    assigned_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Date d\'attribution'))
-    purchase_date = models.DateField(null=True, blank=True, verbose_name=_('Date d\'achat'))
-    purchase_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True,
-        verbose_name=_('Valeur d\'achat (FCFA)')
+
+    assigned_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Date d\'assignation')
     )
-    location = models.CharField(_('Localisation'), max_length=150, blank=True)
-    notes = models.TextField(_('Notes'), blank=True)
-    qr_code = models.ImageField(
-        upload_to='inventory/qr_codes/', blank=True, verbose_name=_('QR Code')
+
+    notes = models.TextField(
+        blank=True,
+        verbose_name=_('Notes')
     )
+
+    purchase_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_('Date d\'achat')
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _('Actif')
-        verbose_name_plural = _('Actifs')
+        verbose_name = _('Équipement')
+        verbose_name_plural = _('Équipements')
         ordering = ['amn_tag']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['assigned_to']),
+            models.Index(fields=['category']),
+        ]
 
     def __str__(self):
-        return f'[{self.amn_tag}] {self.name}'
+        return f'{self.amn_tag} — {self.brand} ({self.get_category_display()})'
 
-    @property
-    def status_color(self):
-        colors = {
-            'available': 'success',
-            'assigned': 'primary',
-            'maintenance': 'warning',
-            'retired': 'secondary',
-            'lost': 'danger',
-        }
-        return colors.get(self.status, 'secondary')
+    def assign_to(self, employee):
+        """Assigne cet équipement à un employé."""
+        self.assigned_to = employee
+        self.status = AssetStatus.ASSIGNED
+        self.assigned_at = timezone.now()
+        self.save(update_fields=['assigned_to', 'status', 'assigned_at'])
 
-    @property
-    def status_icon(self):
-        icons = {
-            'available': '✅',
-            'assigned': '👤',
-            'maintenance': '🔧',
-            'retired': '🗄️',
-            'lost': '❌',
-        }
-        return icons.get(self.status, '📦')
+    def release(self):
+        """Libère l'équipement."""
+        self.assigned_to = None
+        self.status = AssetStatus.AVAILABLE
+        self.assigned_at = None
+        self.save(update_fields=['assigned_to', 'status', 'assigned_at'])
 
 
-class AssetTransfer(models.Model):
-    """Transfert P2P d'un actif entre deux employés."""
-    STATUS_CHOICES = [
-        ('pending', _('En attente')),
-        ('approved', _('Approuvé')),
-        ('rejected', _('Refusé')),
-        ('completed', _('Complété')),
-    ]
-
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE,
-                              related_name='transfers', verbose_name=_('Actif'))
-    from_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name='transfers_sent', verbose_name=_('Cédant')
-    )
-    to_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name='transfers_received', verbose_name=_('Bénéficiaire')
-    )
-    reason = models.TextField(_('Motif du transfert'))
-    status = models.CharField(
-        _('Statut'), max_length=20, choices=STATUS_CHOICES, default='pending'
-    )
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='approved_transfers',
-        verbose_name=_('Approuvé par')
-    )
-    approved_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = _('Transfert d\'actif')
-        verbose_name_plural = _('Transferts d\'actifs')
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f'{self.asset.amn_tag}: {self.from_user} → {self.to_user}'
-
-
-# ──────────────────────────────────────────────
-# STOCK GLOBAL (CONSOMMABLES)
-# ──────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# STOCK GLOBAL — Consommables et fournitures
+# ─────────────────────────────────────────────────────────────────────────────
 
 class StockItem(models.Model):
-    """Article en stock (consommables, fournitures)."""
-    UNIT_CHOICES = [
-        ('unit', _('Unité')),
-        ('box', _('Boîte')),
-        ('ream', _('Ramette')),
-        ('liter', _('Litre')),
-        ('kg', _('Kg')),
-        ('pack', _('Pack')),
-    ]
+    """Article de stock global (consommables, fournitures)."""
 
-    name = models.CharField(_('Désignation'), max_length=200)
-    sku = models.CharField(
-        _('Référence SKU'), max_length=50, unique=True, blank=True,
-        help_text=_('Laissez vide pour génération automatique')
+    name = models.CharField(
+        max_length=120,
+        verbose_name=_('Nom de l\'article')
     )
-    category = models.ForeignKey(
-        AssetCategory, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='stock_items', verbose_name=_('Catégorie')
+
+    description = models.TextField(
+        blank=True,
+        verbose_name=_('Description')
     )
-    quantity = models.PositiveIntegerField(_('Quantité actuelle'), default=0)
+
+    quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_('Quantité en stock')
+    )
+
     alert_threshold = models.PositiveIntegerField(
-        _('Seuil d\'alerte'), default=5,
-        help_text=_('Déclenche une alerte si la quantité descend en dessous')
+        default=5,
+        verbose_name=_('Seuil d\'alerte'),
+        help_text=_('Notification envoyée quand la quantité passe sous ce seuil')
     )
-    unit = models.CharField(_('Unité'), max_length=10, choices=UNIT_CHOICES, default='unit')
-    location = models.CharField(_('Emplacement'), max_length=150, blank=True)
-    supplier = models.CharField(_('Fournisseur'), max_length=200, blank=True)
-    last_restock_date = models.DateField(null=True, blank=True, verbose_name=_('Dernier réappro'))
-    notes = models.TextField(_('Notes'), blank=True)
-    is_active = models.BooleanField(_('Actif'), default=True)
+
+    unit = models.CharField(
+        max_length=30,
+        default='unité(s)',
+        verbose_name=_('Unité')
+    )
+
+    location = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name=_('Emplacement / Étagère')
+    )
+
+    qr_code = models.ImageField(
+        upload_to='inventory/qrcodes/',
+        blank=True,
+        null=True,
+        verbose_name=_('QR Code')
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _('Article en stock')
-        verbose_name_plural = _('Articles en stock')
+        verbose_name = _('Article de stock')
+        verbose_name_plural = _('Articles de stock')
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['quantity', 'alert_threshold']),
+        ]
 
     def __str__(self):
-        return f'{self.name} ({self.quantity} {self.get_unit_display()})'
-
-    def save(self, *args, **kwargs):
-        if not self.sku:
-            import random
-            import string
-            self.sku = 'STK-' + ''.join(
-                random.choices(string.ascii_uppercase + string.digits, k=8)
-            )
-        super().save(*args, **kwargs)
-
-    @property
-    def stock_status(self):
-        """Retourne le niveau d'alerte : ok / low / critical."""
-        if self.quantity == 0:
-            return 'critical'
-        if self.quantity <= self.alert_threshold:
-            return 'low'
-        return 'ok'
-
-    @property
-    def stock_badge(self):
-        badges = {
-            'ok': ('success', '✅'),
-            'low': ('warning', '⚠️'),
-            'critical': ('danger', '🔴'),
-        }
-        return badges.get(self.stock_status, ('secondary', '📦'))
+        return f'{self.name} ({self.quantity} {self.unit})'
 
     @property
     def is_low_stock(self):
         return self.quantity <= self.alert_threshold
 
+    @property
+    def is_critical_stock(self):
+        return self.quantity <= max(1, self.alert_threshold // 2)
+
+    @property
+    def stock_level(self):
+        """Retourne 'ok', 'low' ou 'critical' pour le template."""
+        if self.is_critical_stock:
+            return 'critical'
+        if self.is_low_stock:
+            return 'low'
+        return 'ok'
+
 
 class StockTransaction(models.Model):
-    """Journal immuable de chaque mouvement de stock (Audit Trail)."""
-    TYPE_CHOICES = [
-        ('in', _('Entrée')),
-        ('out', _('Sortie')),
-        ('adjust', _('Ajustement')),
-        ('loss', _('Perte / Casse')),
-    ]
+    """
+    Journal immuable de chaque mouvement de stock.
+    Audit trail : ne jamais modifier, seulement créer.
+    """
 
     item = models.ForeignKey(
-        StockItem, on_delete=models.CASCADE,
-        related_name='transactions', verbose_name=_('Article')
+        StockItem,
+        on_delete=models.PROTECT,
+        related_name='transactions',
+        verbose_name=_('Article')
     )
+
     transaction_type = models.CharField(
-        _('Type'), max_length=10, choices=TYPE_CHOICES
+        max_length=3,
+        choices=TransactionType.choices,
+        verbose_name=_('Type de mouvement')
     )
-    quantity = models.IntegerField(
-        _('Quantité'), help_text=_('Positif pour entrée, négatif pour sortie')
+
+    quantity = models.PositiveIntegerField(
+        verbose_name=_('Quantité')
     )
-    quantity_before = models.PositiveIntegerField(_('Stock avant'), default=0)
-    quantity_after = models.PositiveIntegerField(_('Stock après'), default=0)
-    reason = models.CharField(_('Motif'), max_length=255, blank=True)
-    reference = models.CharField(
-        _('Référence'), max_length=100, blank=True,
-        help_text=_('N° BL, N° commande, etc.')
+
+    quantity_before = models.PositiveIntegerField(
+        verbose_name=_('Stock avant')
     )
+
+    quantity_after = models.PositiveIntegerField(
+        verbose_name=_('Stock après')
+    )
+
     performed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name='stock_transactions',
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='stock_transactions',
         verbose_name=_('Effectué par')
     )
-    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_('Date/Heure'))
+
+    reason = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_('Motif')
+    )
+
+    timestamp = models.DateTimeField(
+        default=timezone.now,
+        db_index=True,
+        verbose_name=_('Horodatage')
+    )
 
     class Meta:
         verbose_name = _('Mouvement de stock')
         verbose_name_plural = _('Mouvements de stock')
         ordering = ['-timestamp']
-        # Immutabilité : pas de mise à jour possible
+        # Audit trail : lecture seule après création
         default_permissions = ('add', 'view')
 
     def __str__(self):
-        sign = '+' if self.quantity > 0 else ''
-        return f'{self.item.name} | {sign}{self.quantity} | {self.timestamp:%d/%m/%Y %H:%M}'
-
-    @property
-    def type_icon(self):
-        icons = {'in': '📥', 'out': '📤', 'adjust': '🔄', 'loss': '💔'}
-        return icons.get(self.transaction_type, '📋')
-
-    @property
-    def type_color(self):
-        colors = {'in': 'success', 'out': 'primary', 'adjust': 'warning', 'loss': 'danger'}
-        return colors.get(self.transaction_type, 'secondary')
-
-
-# ──────────────────────────────────────────────
-# HELPDESK / TICKETS SOS
-# ──────────────────────────────────────────────
-
-class Ticket(models.Model):
-    """Ticket de support SOS pour pannes ou demandes matérielles."""
-    PRIORITY_CHOICES = [
-        ('low', _('Faible')),
-        ('medium', _('Moyenne')),
-        ('high', _('Haute')),
-        ('critical', _('Critique / SOS')),
-    ]
-    STATUS_CHOICES = [
-        ('open', _('Ouvert')),
-        ('in_progress', _('En cours')),
-        ('waiting', _('En attente de pièces')),
-        ('resolved', _('Résolu')),
-        ('closed', _('Fermé')),
-    ]
-    CATEGORY_CHOICES = [
-        ('hardware', _('Matériel informatique')),
-        ('software', _('Logiciel / Application')),
-        ('network', _('Réseau / Internet')),
-        ('phone', _('Téléphonie')),
-        ('furniture', _('Mobilier / Locaux')),
-        ('other', _('Autre')),
-    ]
-
-    ticket_number = models.CharField(
-        _('N° Ticket'), max_length=20, unique=True, editable=False
-    )
-    submitted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name='submitted_tickets', verbose_name=_('Soumis par')
-    )
-    assigned_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='assigned_tickets',
-        verbose_name=_('Assigné à')
-    )
-    related_asset = models.ForeignKey(
-        Asset, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='tickets', verbose_name=_('Actif concerné')
-    )
-    subject = models.CharField(_('Sujet'), max_length=200)
-    description = models.TextField(_('Description du problème'))
-    breakdown_photo = models.ImageField(
-        upload_to='inventory/tickets/', blank=True,
-        verbose_name=_('Photo de la panne')
-    )
-    category = models.CharField(
-        _('Catégorie'), max_length=20, choices=CATEGORY_CHOICES, default='hardware'
-    )
-    priority = models.CharField(
-        _('Priorité'), max_length=10, choices=PRIORITY_CHOICES, default='medium'
-    )
-    status = models.CharField(
-        _('Statut'), max_length=20, choices=STATUS_CHOICES, default='open'
-    )
-    resolution_notes = models.TextField(_('Notes de résolution'), blank=True)
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = _('Ticket Support')
-        verbose_name_plural = _('Tickets Support')
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f'[{self.ticket_number}] {self.subject} — {self.get_priority_display()}'
+        direction = '↑' if self.transaction_type == TransactionType.IN else '↓'
+        return f'{direction} {self.item.name} × {self.quantity} — {self.timestamp:%Y-%m-%d %H:%M}'
 
     def save(self, *args, **kwargs):
-        if not self.ticket_number:
-            import random
-            year = timezone.now().year
-            self.ticket_number = f'TKT-{year}-{random.randint(10000, 99999)}'
+        if self.pk:
+            raise PermissionError(_('Les mouvements de stock sont immuables (audit trail).'))
         super().save(*args, **kwargs)
 
-    @property
-    def priority_color(self):
-        colors = {
-            'low': 'secondary',
-            'medium': 'primary',
-            'high': 'warning',
-            'critical': 'danger',
-        }
-        return colors.get(self.priority, 'secondary')
 
-    @property
-    def priority_icon(self):
-        icons = {
-            'low': '🟢',
-            'medium': '🔵',
-            'high': '🟠',
-            'critical': '🔴',
-        }
-        return icons.get(self.priority, '⚪')
+# ─────────────────────────────────────────────────────────────────────────────
+# TICKET HELPDESK
+# ─────────────────────────────────────────────────────────────────────────────
 
-    @property
-    def status_color(self):
-        colors = {
-            'open': 'danger',
-            'in_progress': 'warning',
-            'waiting': 'secondary',
-            'resolved': 'success',
-            'closed': 'dark',
-        }
-        return colors.get(self.status, 'secondary')
+class Ticket(models.Model):
+    """Ticket de support technique soumis par un employé."""
+
+    subject = models.CharField(
+        max_length=160,
+        verbose_name=_('Sujet')
+    )
+
+    description = models.TextField(
+        verbose_name=_('Description du problème')
+    )
+
+    photo = models.ImageField(
+        upload_to='inventory/tickets/%Y/%m/',
+        blank=True,
+        null=True,
+        verbose_name=_('Photo de la panne')
+    )
+
+    priority = models.CharField(
+        max_length=10,
+        choices=TicketPriority.choices,
+        default=TicketPriority.MEDIUM,
+        verbose_name=_('Priorité')
+    )
+
+    status = models.CharField(
+        max_length=15,
+        choices=TicketStatus.choices,
+        default=TicketStatus.OPEN,
+        verbose_name=_('Statut')
+    )
+
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='tickets',
+        verbose_name=_('Soumis par')
+    )
+
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_tickets',
+        verbose_name=_('Assigné à')
+    )
+
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets',
+        verbose_name=_('Équipement concerné')
+    )
+
+    resolution_notes = models.TextField(
+        blank=True,
+        verbose_name=_('Notes de résolution')
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _('Ticket Helpdesk')
+        verbose_name_plural = _('Tickets Helpdesk')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'priority']),
+            models.Index(fields=['submitted_by']),
+        ]
+
+    def __str__(self):
+        return f'[{self.get_priority_display()}] {self.subject}'
 
     @property
     def is_sos(self):
-        return self.priority == 'critical'
+        return self.priority == TicketPriority.CRITICAL
 
-
-class TicketComment(models.Model):
-    """Commentaire interne sur un ticket."""
-    ticket = models.ForeignKey(
-        Ticket, on_delete=models.CASCADE,
-        related_name='comments', verbose_name=_('Ticket')
-    )
-    author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        verbose_name=_('Auteur')
-    )
-    content = models.TextField(_('Commentaire'))
-    is_internal = models.BooleanField(
-        _('Note interne'), default=False,
-        help_text=_('Si coché, visible uniquement par le staff')
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = _('Commentaire ticket')
-        verbose_name_plural = _('Commentaires tickets')
-        ordering = ['created_at']
-
-    def __str__(self):
-        return f'{self.ticket.ticket_number} — {self.author} ({self.created_at:%d/%m %H:%M})'
+    def resolve(self, agent, notes=''):
+        self.status = TicketStatus.RESOLVED
+        self.assigned_to = agent
+        self.resolution_notes = notes
+        self.resolved_at = timezone.now()
+        self.save(update_fields=['status', 'assigned_to', 'resolution_notes', 'resolved_at'])

@@ -1,226 +1,188 @@
 """
-inventory/forms.py
-Formulaires pour le Module 3 — Gestion d'Actifs, Stock Global & Helpdesk
+Formulaires — Module Inventaire & Helpdesk.
+AMN Employee Hub.
 """
+
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import Asset, StockItem, StockTransaction, Ticket, AssetTransfer, TicketComment
+
+from inventory.models import Asset, StockItem, StockTransaction, Ticket, TicketPriority, TransactionType
+
+
+class StockUpdateForm(forms.Form):
+    """Formulaire de mise à jour rapide du stock (+ ou -)."""
+
+    quantity = forms.IntegerField(
+        min_value=1,
+        max_value=9999,
+        label=_('Quantité'),
+        widget=forms.NumberInput(attrs={
+            'class': 'w-20 text-center border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+            'placeholder': '1',
+        })
+    )
+
+    transaction_type = forms.ChoiceField(
+        choices=TransactionType.choices,
+        widget=forms.HiddenInput()
+    )
+
+    reason = forms.CharField(
+        max_length=200,
+        required=False,
+        label=_('Motif (optionnel)'),
+        widget=forms.TextInput(attrs={
+            'class': 'w-full border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+            'placeholder': _('Ex: Livraison fournisseur, Commande bureau…'),
+        })
+    )
+
+
+class TicketForm(forms.ModelForm):
+    """Formulaire de création d'un ticket helpdesk."""
+
+    class Meta:
+        model = Ticket
+        fields = ['subject', 'description', 'photo', 'priority', 'asset']
+        widgets = {
+            'subject': forms.TextInput(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-400 text-slate-800',
+                'placeholder': _('Ex: Écran noir au démarrage, Clavier non reconnu…'),
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-400 text-slate-800 resize-none',
+                'rows': 5,
+                'placeholder': _('Décrivez le problème en détail : depuis quand, que s\'est-il passé…'),
+            }),
+            'priority': forms.Select(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-400 text-slate-800',
+            }),
+            'asset': forms.Select(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-400 text-slate-800',
+            }),
+            'photo': forms.FileInput(attrs={
+                'class': 'hidden',
+                'accept': 'image/*',
+                'id': 'photo-upload',
+            }),
+        }
+        labels = {
+            'subject': _('Sujet du problème'),
+            'description': _('Description détaillée'),
+            'photo': _('Photo de la panne (optionnel)'),
+            'priority': _('Niveau d\'urgence'),
+            'asset': _('Équipement concerné (optionnel)'),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        # Filtre les assets assignés à cet employé uniquement
+        if user and not user.is_staff:
+            self.fields['asset'].queryset = Asset.objects.filter(assigned_to=user)
+        self.fields['asset'].required = False
+        self.fields['asset'].empty_label = _('— Aucun équipement spécifique —')
+
+
+class AssetTransferForm(forms.Form):
+    """Transfert P2P d'un équipement entre deux employés."""
+
+    new_owner = forms.ModelChoiceField(
+        queryset=None,
+        label=_('Transférer à'),
+        widget=forms.Select(attrs={
+            'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+        })
+    )
+
+    reason = forms.CharField(
+        max_length=200,
+        required=False,
+        label=_('Motif du transfert'),
+        widget=forms.TextInput(attrs={
+            'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+            'placeholder': _('Ex: Départ en mission, Changement de poste…'),
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        from django.contrib.auth import get_user_model
+        current_user = kwargs.pop('current_user', None)
+        super().__init__(*args, **kwargs)
+        User = get_user_model()
+        qs = User.objects.filter(is_active=True)
+        if current_user:
+            qs = qs.exclude(pk=current_user.pk)
+        self.fields['new_owner'].queryset = qs
 
 
 class AssetForm(forms.ModelForm):
-    """Formulaire de création/édition d'un actif."""
+    """Formulaire de création/modification d'un équipement (managers uniquement)."""
 
     class Meta:
         model = Asset
-        fields = [
-            'amn_tag', 'name', 'category', 'brand', 'model',
-            'serial_number', 'status', 'assigned_to', 'purchase_date',
-            'purchase_price', 'location', 'notes',
-        ]
+        fields = ['amn_tag', 'category', 'brand', 'serial_number', 'status', 'assigned_to', 'purchase_date', 'notes']
         widgets = {
             'amn_tag': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': 'AMN-PC-0042',
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'placeholder': 'AMN-LT-001',
             }),
-            'name': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Ex: Laptop Dell Latitude 5520'),
+            'category': forms.Select(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
             }),
-            'category': forms.Select(attrs={'class': 'form-select rounded-xl'}),
             'brand': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': 'Dell, HP, Lenovo…',
-            }),
-            'model': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Numéro de modèle'),
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'placeholder': 'Dell Latitude 5520',
             }),
             'serial_number': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('N° de série constructeur'),
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
             }),
-            'status': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'assigned_to': forms.Select(attrs={'class': 'form-select rounded-xl'}),
+            'status': forms.Select(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+            }),
+            'assigned_to': forms.Select(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+            }),
             'purchase_date': forms.DateInput(attrs={
-                'class': 'form-control rounded-xl',
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
                 'type': 'date',
             }),
-            'purchase_price': forms.NumberInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': '0',
-                'min': '0',
-            }),
-            'location': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Siège Douala, Agence Yaoundé…'),
-            }),
             'notes': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none',
                 'rows': 3,
-                'placeholder': _('Remarques optionnelles…'),
             }),
         }
 
 
 class StockItemForm(forms.ModelForm):
-    """Formulaire de création/édition d'un article en stock."""
+    """Formulaire de création/modification d'un article de stock."""
 
     class Meta:
         model = StockItem
-        fields = [
-            'name', 'category', 'quantity', 'alert_threshold',
-            'unit', 'location', 'supplier', 'notes',
-        ]
+        fields = ['name', 'description', 'quantity', 'alert_threshold', 'unit', 'location']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Ex: Ramette A4 80g'),
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'placeholder': _('Ex: Câble USB-C, Cahier A4…'),
             }),
-            'category': forms.Select(attrs={'class': 'form-select rounded-xl'}),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none',
+                'rows': 2,
+            }),
             'quantity': forms.NumberInput(attrs={
-                'class': 'form-control rounded-xl',
-                'min': '0',
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'min': 0,
             }),
             'alert_threshold': forms.NumberInput(attrs={
-                'class': 'form-control rounded-xl',
-                'min': '1',
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400',
+                'min': 1,
             }),
-            'unit': forms.Select(attrs={'class': 'form-select rounded-xl'}),
+            'unit': forms.TextInput(attrs={
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'placeholder': 'unité(s), pièce(s), boîte(s)…',
+            }),
             'location': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Étagère 3, Armoire B…'),
-            }),
-            'supplier': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Nom du fournisseur'),
-            }),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
-                'rows': 2,
-                'placeholder': _('Notes optionnelles…'),
-            }),
-        }
-
-
-class StockAdjustForm(forms.Form):
-    """Formulaire d'ajustement rapide (+/-) du stock."""
-    DIRECTION_CHOICES = [
-        ('in', _('Entrée (+)')),
-        ('out', _('Sortie (-)')),
-        ('adjust', _('Ajustement manuel')),
-        ('loss', _('Perte / Casse')),
-    ]
-
-    direction = forms.ChoiceField(
-        choices=DIRECTION_CHOICES,
-        label=_('Type de mouvement'),
-        widget=forms.Select(attrs={'class': 'form-select rounded-xl'}),
-    )
-    quantity = forms.IntegerField(
-        min_value=1,
-        label=_('Quantité'),
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control rounded-xl',
-            'min': '1',
-            'value': '1',
-        }),
-    )
-    reason = forms.CharField(
-        max_length=255,
-        required=False,
-        label=_('Motif'),
-        widget=forms.TextInput(attrs={
-            'class': 'form-control rounded-xl',
-            'placeholder': _('Optionnel — raison du mouvement'),
-        }),
-    )
-    reference = forms.CharField(
-        max_length=100,
-        required=False,
-        label=_('Référence (N° BL, commande…)'),
-        widget=forms.TextInput(attrs={
-            'class': 'form-control rounded-xl',
-            'placeholder': 'BL-2024-XXX',
-        }),
-    )
-
-
-class TicketForm(forms.ModelForm):
-    """Formulaire de création d'un ticket SOS."""
-
-    class Meta:
-        model = Ticket
-        fields = [
-            'subject', 'category', 'priority', 'description',
-            'breakdown_photo', 'related_asset',
-        ]
-        widgets = {
-            'subject': forms.TextInput(attrs={
-                'class': 'form-control rounded-xl',
-                'placeholder': _('Résumé court du problème'),
-            }),
-            'category': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'priority': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
-                'rows': 5,
-                'placeholder': _(
-                    'Décrivez le problème en détail : que s\'est-il passé ? '
-                    'Depuis quand ? Avez-vous déjà essayé quelque chose ?'
-                ),
-            }),
-            'breakdown_photo': forms.ClearableFileInput(attrs={
-                'class': 'form-control rounded-xl',
-                'accept': 'image/*',
-            }),
-            'related_asset': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-        }
-
-
-class TicketStatusForm(forms.ModelForm):
-    """Formulaire de mise à jour du statut d'un ticket (staff)."""
-
-    class Meta:
-        model = Ticket
-        fields = ['status', 'assigned_to', 'resolution_notes']
-        widgets = {
-            'status': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'assigned_to': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'resolution_notes': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
-                'rows': 4,
-                'placeholder': _('Notes de résolution, étapes effectuées…'),
-            }),
-        }
-
-
-class TicketCommentForm(forms.ModelForm):
-    """Formulaire d'ajout d'un commentaire sur un ticket."""
-
-    class Meta:
-        model = TicketComment
-        fields = ['content', 'is_internal']
-        widgets = {
-            'content': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
-                'rows': 3,
-                'placeholder': _('Votre message ou mise à jour…'),
-            }),
-            'is_internal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
-
-class AssetTransferForm(forms.ModelForm):
-    """Formulaire de demande de transfert P2P d'un actif."""
-
-    class Meta:
-        model = AssetTransfer
-        fields = ['to_user', 'reason']
-        widgets = {
-            'to_user': forms.Select(attrs={'class': 'form-select rounded-xl'}),
-            'reason': forms.Textarea(attrs={
-                'class': 'form-control rounded-xl',
-                'rows': 3,
-                'placeholder': _('Expliquez pourquoi ce transfert est nécessaire…'),
+                'class': 'w-full border border-slate-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400',
+                'placeholder': _('Ex: Armoire A, Étagère 3…'),
             }),
         }

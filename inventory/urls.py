@@ -1,41 +1,32 @@
 """
-inventory/urls.py
+URLs — Module Inventaire & Helpdesk.
+AMN Employee Hub.
 """
+
 from django.urls import path
-from . import views
+
+from inventory import views
 
 app_name = 'inventory'
 
 urlpatterns = [
-    # ── Index (redirige selon le rôle) ──
-    path('', views.inventory_index, name='index'),
+    # Dashboard Warehouse (managers)
+    path('', views.WarehouseDashboardView.as_view(), name='dashboard'),
 
-    # ── Manager : Dashboard Warehouse ──
-    path('warehouse/', views.warehouse_dashboard, name='warehouse_dashboard'),
+    # Vue employé : Mon Bureau Digital
+    path('my-assets/', views.MyAssetsView.as_view(), name='my_assets'),
 
-    # ── Stock Global ──
-    path('stock/nouveau/', views.stock_item_create, name='stock_create'),
-    path('stock/<int:pk>/modifier/', views.stock_item_edit, name='stock_edit'),
-    path('stock/<int:pk>/ajuster/', views.stock_adjust, name='stock_adjust'),
-    path('stock/<int:pk>/transactions/', views.stock_transactions, name='stock_transactions'),
+    # Transfert P2P
+    path('assets/<int:asset_id>/transfer/', views.transfer_asset, name='transfer_asset'),
 
-    # ── Actifs individuels ──
-    path('actifs/nouveau/', views.asset_create, name='asset_create'),
-    path('actifs/<int:pk>/', views.asset_detail, name='asset_detail'),
-    path('actifs/<int:pk>/modifier/', views.asset_edit, name='asset_edit'),
-    path('actifs/<int:asset_pk>/transfert/', views.request_transfer, name='request_transfer'),
+    # Helpdesk — Ticket flow
+    path('helpdesk/', views.HelpdeskView.as_view(), name='helpdesk'),
+    path('helpdesk/<int:ticket_id>/status/', views.update_ticket_status, name='update_ticket_status'),
 
-    # ── Employé : Mon Bureau Digital ──
-    path('mes-actifs/', views.my_assets, name='my_assets'),
+    # Stock updates (AJAX)
+    path('stock/<int:item_id>/update/', views.update_stock, name='update_stock'),
+    path('stock/<int:item_id>/qr/', views.stock_item_by_qr, name='stock_qr'),
 
-    # ── Helpdesk ──
-    path('tickets/', views.ticket_list, name='ticket_list'),
-    path('tickets/nouveau/', views.ticket_create, name='ticket_create'),
-    path('tickets/<int:pk>/', views.ticket_detail, name='ticket_detail'),
-
-    # ── Tutoriel ──
-    path('tutoriel/vu/', views.mark_tutorial_seen, name='mark_tutorial_seen'),
-
-    # ── QR Code ──
-    path('qr-scan/', views.qr_lookup, name='qr_lookup'),
+    # Tutoriel : Marquer comme vu (AJAX)
+    path('tutorial/seen/', views.mark_tutorial_seen, name='tutorial_seen'),
 ]

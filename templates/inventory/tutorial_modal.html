@@ -1,0 +1,228 @@
+{% load i18n %}
+{#
+  Tutoriel Interactif — Module Inventaire
+  Style : "Expérience Jeu Vidéo" — Modals step-by-step avec backdrop blur
+  Ce template est inclus conditionnellement si show_tutorial == True.
+#}
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  DIALOG DE CONFIRMATION : "Voulez-vous des explications ?"            -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="tutorial-confirm" class="fixed inset-0 z-[9000] flex items-center justify-center p-4">
+  <!-- Fond flouté -->
+  <div class="absolute inset-0 bg-black/30 backdrop-blur-md"></div>
+  <div class="relative z-10 bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-bounce-in">
+    <div class="text-5xl mb-4">🎓</div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2">{% trans "Nouveau module !" %}</h2>
+    <p class="text-slate-500 text-sm leading-relaxed mb-8">
+      {% trans "Voulez-vous des explications sur l'utilisation de cette partie ?" %}
+    </p>
+    <div class="flex flex-col gap-3">
+      <button onclick="startTutorial()"
+        class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-base hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200">
+        ✨ {% trans "Oui, montrez-moi !" %}
+      </button>
+      <button onclick="skipTutorial()"
+        class="w-full py-3 text-slate-400 text-sm hover:text-slate-600 transition-colors">
+        {% trans "Passer — Je connais déjà" %}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  MODALS DU TUTORIEL — Step 1, 2, 3                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+
+<!-- Template des données des étapes -->
+<script>
+const TUTORIAL_STEPS = [
+  {
+    icon: '📦',
+    title: '{% trans "Stock Global" %}',
+    subtitle: '{% trans "Étape 1 sur 3" %}',
+    color: 'indigo',
+    content: `
+      <div class="space-y-4 text-left">
+        <div class="flex items-start gap-3 p-4 bg-indigo-50 rounded-2xl">
+          <span class="text-2xl">🔴</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Alertes de stock" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Quand un article passe en orange (bas) ou rouge (critique), une notification est automatiquement envoyée aux managers." %}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
+          <span class="text-2xl">➕</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Mise à jour instantanée" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Utilisez les boutons + et − pour enregistrer chaque entrée ou sortie. Chaque mouvement est horodaté et immuable." %}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
+          <span class="text-2xl">📷</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Scanner QR Code" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Scannez le QR code d'un article pour accéder instantanément à ses informations de stock." %}</div>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  {
+    icon: '💻',
+    title: '{% trans "Mon Bureau Digital" %}',
+    subtitle: '{% trans "Étape 2 sur 3" %}',
+    color: 'violet',
+    content: `
+      <div class="space-y-4 text-left">
+        <div class="flex items-start gap-3 p-4 bg-violet-50 rounded-2xl">
+          <span class="text-2xl">🎒</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Mes équipements" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Retrouvez ici tout le matériel qui vous a été assigné : laptop, téléphone, badge… avec leur tag AMN unique." %}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
+          <span class="text-2xl">🔄</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Transfert P2P" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Vous pouvez transférer un équipement directement à un collègue sans passer par le manager. Le système enregistre tout." %}</div>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  {
+    icon: '🚨',
+    title: '{% trans "Helpdesk — Ticket SOS" %}',
+    subtitle: '{% trans "Étape 3 sur 3" %}',
+    color: 'red',
+    content: `
+      <div class="space-y-4 text-left">
+        <div class="flex items-start gap-3 p-4 bg-red-50 rounded-2xl">
+          <span class="text-2xl">🎫</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Ouvrir un ticket" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Décrivez votre problème, ajoutez une photo de la panne, et choisissez le niveau d'urgence. Le ticket est immédiatement visible par l'équipe IT." %}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-red-50 rounded-2xl border-2 border-red-200">
+          <span class="text-2xl">🚨</span>
+          <div>
+            <div class="font-semibold text-red-700 text-sm">{% trans "Mode SOS" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Un ticket SOS envoie une notification email immédiate à toute l'équipe IT. Réservez ce mode aux urgences réelles." %}</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl">
+          <span class="text-2xl">📈</span>
+          <div>
+            <div class="font-semibold text-slate-700 text-sm">{% trans "Suivi en temps réel" %}</div>
+            <div class="text-slate-500 text-xs mt-1">{% trans "Suivez l'avancement de vos tickets : Ouvert → En cours → Résolu." %}</div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+];
+
+let currentStep = 0;
+
+function startTutorial() {
+  document.getElementById('tutorial-confirm').classList.add('hidden');
+  showStep(0);
+}
+
+function skipTutorial() {
+  document.getElementById('tutorial-confirm').classList.add('hidden');
+  markTutorialSeen();
+}
+
+function showStep(step) {
+  // Supprimer le modal précédent
+  const existing = document.getElementById('tutorial-step-modal');
+  if (existing) existing.remove();
+
+  if (step >= TUTORIAL_STEPS.length) {
+    markTutorialSeen();
+    showTutorialComplete();
+    return;
+  }
+
+  currentStep = step;
+  const s = TUTORIAL_STEPS[step];
+  const colorMap = {
+    indigo: { bg: 'bg-indigo-600', ring: 'ring-indigo-200', light: 'bg-indigo-50', text: 'text-indigo-700' },
+    violet: { bg: 'bg-violet-600', ring: 'ring-violet-200', light: 'bg-violet-50', text: 'text-violet-700' },
+    red: { bg: 'bg-red-600', ring: 'ring-red-200', light: 'bg-red-50', text: 'text-red-700' },
+  };
+  const c = colorMap[s.color];
+
+  const modal = document.createElement('div');
+  modal.id = 'tutorial-step-modal';
+  modal.className = 'fixed inset-0 z-[9000] flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+    <div class="relative z-10 bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up">
+      <!-- Header coloré -->
+      <div class="${c.bg} px-8 pt-8 pb-6 text-white">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-semibold opacity-70 uppercase tracking-widest">${s.subtitle}</span>
+          <button onclick="skipTutorial()" class="text-white/60 hover:text-white text-sm transition-colors">{% trans "Passer" %} ✕</button>
+        </div>
+        <div class="text-5xl mb-3">${s.icon}</div>
+        <h3 class="text-2xl font-bold">${s.title}</h3>
+        <!-- Barre de progression -->
+        <div class="flex gap-1.5 mt-5">
+          ${TUTORIAL_STEPS.map((_, i) => `<div class="h-1.5 flex-1 rounded-full ${i <= step ? 'bg-white' : 'bg-white/30'}"></div>`).join('')}
+        </div>
+      </div>
+      <!-- Contenu -->
+      <div class="px-8 py-6">
+        ${s.content}
+      </div>
+      <!-- Actions -->
+      <div class="px-8 pb-8 flex gap-3">
+        ${step > 0 ? `<button onclick="showStep(${step - 1})" class="py-3 px-5 border border-slate-200 text-slate-600 rounded-2xl font-semibold text-sm hover:bg-slate-50 transition-colors">← {% trans "Précédent" %}</button>` : ''}
+        <button onclick="showStep(${step + 1})"
+          class="flex-1 py-3 ${c.bg} text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all active:scale-95 shadow-lg">
+          ${step < TUTORIAL_STEPS.length - 1 ? '{% trans "Suivant" %} →' : '🎉 {% trans "Commencer !" %}'}
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function showTutorialComplete() {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] bg-slate-800 text-white px-8 py-4 rounded-3xl shadow-2xl font-semibold flex items-center gap-3';
+  toast.innerHTML = '🎉 {% trans "Tutoriel terminé — Bonne gestion !" %}';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+async function markTutorialSeen() {
+  try {
+    await fetch('{% url "inventory:tutorial_seen" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+    });
+  } catch(e) {
+    console.warn('Could not mark tutorial as seen', e);
+  }
+}
+</script>
+
+<style>
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes slide-up {
+  0% { transform: translateY(40px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.animate-slide-up { animation: slide-up 0.35s ease-out forwards; }
+</style>

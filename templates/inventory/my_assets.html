@@ -1,236 +1,155 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n humanize %}
 
-{% block title %}{% trans "Mon Bureau Digital — AMN" %}{% endblock %}
-
-{% block extra_css %}
-<style>
-  :root {
-    --bg: #F9FAFB; --card: #FFFFFF; --border: #E5E7EB;
-    --text: #111827; --muted: #6B7280;
-    --primary: #6366F1; --success: #22C55E;
-    --warning: #F59E0B; --danger: #EF4444;
-  }
-  body { background: var(--bg); }
-
-  .hero-header {
-    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 60%, #8b5cf6 100%);
-    border-radius: 0 0 32px 32px;
-    padding: 32px 24px 28px;
-    color: #fff;
-    margin-bottom: 24px;
-  }
-  .card {
-    background: var(--card);
-    border-radius: 20px;
-    box-shadow: 0 2px 16px rgba(0,0,0,.06);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .card-header {
-    padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .card-body { padding: 18px 22px; }
-
-  .asset-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 0; border-bottom: 1px solid var(--border);
-  }
-  .asset-item:last-child { border-bottom: none; }
-  .asset-icon {
-    width: 48px; height: 48px; border-radius: 14px;
-    background: linear-gradient(135deg, #ede9fe, #c7d2fe);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; flex-shrink: 0;
-  }
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 999px;
-    font-size: 12px; font-weight: 700;
-  }
-  .badge-success { background:#dcfce7; color:#166534; }
-  .badge-primary { background:#ede9fe; color:#5b21b6; }
-  .badge-warning { background:#fef3c7; color:#92400e; }
-  .badge-danger  { background:#fee2e2; color:#991b1b; }
-  .badge-secondary { background:#f3f4f6; color:#374151; }
-
-  .ticket-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 0; border-bottom: 1px solid var(--border);
-    text-decoration: none; color: inherit;
-  }
-  .ticket-row:last-child { border-bottom: none; }
-  .ticket-row:hover { background: #f8fafc; border-radius: 12px; padding: 12px 8px; }
-
-  .btn-sos {
-    display: block; width: 100%; padding: 16px;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff; border: none; border-radius: 16px;
-    font-size: 17px; font-weight: 800; cursor: pointer;
-    text-decoration: none; text-align: center;
-    box-shadow: 0 6px 20px rgba(239,68,68,.4);
-    transition: transform .15s, box-shadow .15s;
-  }
-  .btn-sos:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(239,68,68,.5); color:#fff; }
-
-  .stat-mini {
-    background: var(--card);
-    border-radius: 16px; border: 1px solid var(--border);
-    padding: 16px 18px; text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,.04);
-  }
-</style>
-{% endblock %}
+{% block title %}{% trans "Mon Bureau Digital" %} | AMN Hub{% endblock %}
 
 {% block content %}
-{% include "inventory/tutorial_modals.html" %}
+<div class="min-h-screen bg-[#F9FAFB] px-4 py-8 sm:px-8">
 
-<!-- HERO -->
-<div class="hero-header">
-  <div style="max-width:900px;margin:0 auto;">
-    <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-                opacity:.75;margin-bottom:4px;">AMN Employee Hub</div>
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px;">
-      💻 {% trans "Mon Bureau Digital" %}
-    </h1>
-    <p style="margin:0;opacity:.85;font-size:14px;">
-      {% trans "Vos équipements, vos tickets de support, tout en un." %}
-    </p>
-  </div>
-</div>
-
-<div style="max-width:900px;margin:0 auto;padding:0 16px 40px;">
-
-  <!-- STATS RAPIDES -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
-    <div class="stat-mini">
-      <div style="font-size:24px;font-weight:900;color:#6366f1;">{{ my_assets|length }}</div>
-      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Actifs assignés" %}</div>
+  <!-- ── En-tête ── -->
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">🖥️ {% trans "Mon Bureau Digital" %}</h1>
+      <p class="text-slate-500 mt-1">{% trans "Vos équipements AMN et vos tickets de support" %}</p>
     </div>
-    <div class="stat-mini">
-      <div style="font-size:24px;font-weight:900;color:#0ea5e9;">{{ my_tickets|length }}</div>
-      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Tickets ouverts" %}</div>
-    </div>
-    <div class="stat-mini">
-      <div style="font-size:24px;font-weight:900;color:#f97316;">{{ pending_transfers|length }}</div>
-      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Transferts en attente" %}</div>
-    </div>
-  </div>
-
-  <!-- BOUTON SOS -->
-  <div style="margin-bottom:24px;">
-    <a href="{% url 'inventory:ticket_create' %}" class="btn-sos">
-      🆘 {% trans "Ouvrir un Ticket SOS" %}
+    <a href="{% url 'inventory:helpdesk' %}"
+      class="inline-flex items-center gap-2 bg-red-600 text-white rounded-2xl px-5 py-3 font-semibold hover:bg-red-700 transition-colors shadow-sm text-sm">
+      🚨 {% trans "Ouvrir un ticket SOS" %}
+      {% if open_tickets_count %}<span class="bg-white text-red-600 rounded-full px-2 text-xs font-bold">{{ open_tickets_count }}</span>{% endif %}
     </a>
   </div>
 
-  <!-- MES ACTIFS -->
-  <div class="card">
-    <div class="card-header">
-      <div>
-        <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0;">
-          🏷️ {% trans "Mes Équipements" %}
-        </h2>
-        <p style="margin:2px 0 0;font-size:12px;color:var(--muted);">
-          {% trans "Matériel AMN qui vous a été confié" %}
-        </p>
-      </div>
-    </div>
-    <div class="card-body">
+  <!-- ── Mes équipements ── -->
+  <section class="mb-10">
+    <h2 class="text-xl font-bold text-slate-700 mb-5">🎒 {% trans "Mes équipements" %}</h2>
+
+    {% if my_assets %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {% for asset in my_assets %}
-      <div class="asset-item">
-        <div class="asset-icon">
-          {{ asset.category.icon|default:"📦" }}
-        </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;color:var(--text);font-size:15px;">{{ asset.name }}</div>
-          <div style="font-size:12px;color:var(--muted);">
-            <code style="background:#f3f4f6;padding:1px 6px;border-radius:4px;font-size:11px;">{{ asset.amn_tag }}</code>
-            {% if asset.brand %} · {{ asset.brand }}{% endif %}
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-all">
+        <!-- Icône catégorie -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl">
+            {% if asset.category == 'LAPTOP' %}💻
+            {% elif asset.category == 'PHONE' %}📱
+            {% elif asset.category == 'TABLET' %}📲
+            {% elif asset.category == 'MONITOR' %}🖥️
+            {% elif asset.category == 'HEADSET' %}🎧
+            {% elif asset.category == 'BADGE' %}🪪
+            {% else %}📦{% endif %}
           </div>
+          <span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-xl text-xs font-semibold">
+            {{ asset.amn_tag }}
+          </span>
         </div>
-        <div style="text-align:right;">
-          <span class="badge badge-{{ asset.status_color }}">{{ asset.status_icon }} {{ asset.get_status_display }}</span>
-          <div style="margin-top:6px;">
-            <a href="{% url 'inventory:asset_detail' asset.pk %}"
-               style="font-size:12px;color:var(--primary);font-weight:700;text-decoration:none;">
-              {% trans "Voir" %} →
-            </a>
-          </div>
-        </div>
-      </div>
-      {% empty %}
-      <div style="text-align:center;padding:32px 20px;color:var(--muted);">
-        <div style="font-size:40px;margin-bottom:8px;">📭</div>
-        <p style="font-size:14px;font-weight:600;">{% trans "Aucun équipement assigné pour le moment." %}</p>
+        <div class="font-bold text-slate-800 text-lg mb-0.5">{{ asset.brand }}</div>
+        <div class="text-sm text-slate-500 mb-4">{{ asset.get_category_display }}</div>
+        {% if asset.serial_number %}
+        <div class="text-xs text-slate-400 font-mono mb-4">S/N : {{ asset.serial_number }}</div>
+        {% endif %}
+
+        <!-- Bouton transfert P2P -->
+        <button onclick="openTransferModal({{ asset.pk }}, '{{ asset.amn_tag|escapejs }}')"
+          class="w-full mt-2 py-2.5 border border-slate-200 text-slate-600 rounded-2xl text-sm font-semibold hover:border-indigo-300 hover:text-indigo-600 transition-all">
+          🔄 {% trans "Transférer" %}
+        </button>
       </div>
       {% endfor %}
     </div>
-  </div>
-
-  <!-- TRANSFERTS EN ATTENTE -->
-  {% if pending_transfers %}
-  <div class="card" style="border-color:#fde68a;">
-    <div class="card-header" style="background:#fffbeb;">
-      <h2 style="font-size:17px;font-weight:800;color:#92400e;margin:0;">
-        🔄 {% trans "Transferts entrants en attente" %}
-      </h2>
+    {% else %}
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm py-16 text-center">
+      <div class="text-5xl mb-4">📦</div>
+      <div class="font-semibold text-slate-600">{% trans "Aucun équipement ne vous est assigné" %}</div>
+      <div class="text-sm text-slate-400 mt-1">{% trans "Contactez votre manager si vous attendez du matériel." %}</div>
     </div>
-    <div class="card-body">
-      {% for transfer in pending_transfers %}
-      <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-        <div style="font-weight:700;color:var(--text);">{{ transfer.asset.name }}</div>
-        <div style="font-size:13px;color:var(--muted);">
-          {% trans "De" %} <strong>{{ transfer.from_user }}</strong> · {{ transfer.created_at|date:"d/m/Y" }}
+    {% endif %}
+  </section>
+
+  <!-- ── Mes tickets ── -->
+  <section>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-bold text-slate-700">🎫 {% trans "Mes tickets" %}</h2>
+      <a href="{% url 'inventory:helpdesk' %}" class="text-indigo-600 font-semibold text-sm hover:underline">{% trans "Voir tout →" %}</a>
+    </div>
+
+    {% if my_tickets %}
+    <div class="space-y-3">
+      {% for ticket in my_tickets|slice:":5" %}
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0
+          {% if ticket.priority == 'SOS' %}bg-red-100
+          {% elif ticket.priority == 'HIGH' %}bg-orange-100
+          {% elif ticket.priority == 'MEDIUM' %}bg-blue-100
+          {% else %}bg-slate-100{% endif %}">
+          {% if ticket.priority == 'SOS' %}🚨
+          {% elif ticket.priority == 'HIGH' %}🔥
+          {% elif ticket.priority == 'MEDIUM' %}⚠️
+          {% else %}ℹ️{% endif %}
         </div>
-        <div style="font-size:13px;color:var(--muted);margin-top:3px;font-style:italic;">
-          "{{ transfer.reason|truncatechars:80 }}"
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-slate-800 truncate">{{ ticket.subject }}</div>
+          <div class="text-xs text-slate-400 mt-0.5">{{ ticket.created_at|naturaltime }}</div>
         </div>
+        <span class="px-3 py-1 rounded-xl text-xs font-semibold flex-shrink-0
+          {% if ticket.status == 'OPEN' %}bg-blue-100 text-blue-700
+          {% elif ticket.status == 'IN_PROGRESS' %}bg-orange-100 text-orange-700
+          {% elif ticket.status == 'RESOLVED' %}bg-emerald-100 text-emerald-700
+          {% else %}bg-slate-100 text-slate-500{% endif %}">
+          {{ ticket.get_status_display }}
+        </span>
       </div>
       {% endfor %}
     </div>
-  </div>
-  {% endif %}
-
-  <!-- MES TICKETS -->
-  <div class="card">
-    <div class="card-header">
-      <div>
-        <h2 style="font-size:17px;font-weight:800;color:var(--text);margin:0;">
-          🎫 {% trans "Mes Tickets Support" %}
-        </h2>
-      </div>
-      <a href="{% url 'inventory:ticket_list' %}"
-         style="font-size:13px;color:var(--primary);font-weight:700;text-decoration:none;">
-        {% trans "Tout voir" %} →
-      </a>
+    {% else %}
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm py-12 text-center">
+      <div class="text-4xl mb-3">✅</div>
+      <div class="font-semibold text-slate-600">{% trans "Aucun ticket ouvert" %}</div>
+      <div class="text-sm text-slate-400 mt-1">{% trans "Tout fonctionne bien !" %}</div>
     </div>
-    <div class="card-body">
-      {% for ticket in my_tickets %}
-      <a href="{% url 'inventory:ticket_detail' ticket.pk %}" class="ticket-row">
-        <span style="font-size:20px;">{{ ticket.priority_icon }}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;color:var(--text);font-size:14px;">{{ ticket.subject|truncatechars:50 }}</div>
-          <div style="font-size:11px;color:var(--muted);">
-            #{{ ticket.ticket_number }} · {{ ticket.created_at|date:"d/m/Y" }}
-          </div>
-        </div>
-        <span class="badge badge-{{ ticket.status_color }}">{{ ticket.get_status_display }}</span>
-      </a>
-      {% empty %}
-      <div style="text-align:center;padding:32px 20px;color:var(--muted);">
-        <div style="font-size:40px;margin-bottom:8px;">✅</div>
-        <p style="font-size:14px;font-weight:600;">{% trans "Aucun ticket en cours. Tout va bien !" %}</p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
+    {% endif %}
+  </section>
 </div>
+
+<!-- ── Modal Transfert P2P ── -->
+<div id="modal-transfer" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeTransferModal()"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800">🔄 {% trans "Transférer l'équipement" %}</h3>
+        <button onclick="closeTransferModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">✕</button>
+      </div>
+      <p class="text-slate-500 text-sm mb-6" id="transfer-asset-label"></p>
+      <form method="post" id="transfer-form">
+        {% csrf_token %}
+        <div class="space-y-4">
+          {{ transfer_form.as_p }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="button" onclick="closeTransferModal()" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold">{% trans "Annuler" %}</button>
+          <button type="submit" class="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">{% trans "Confirmer le transfert" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if show_tutorial %}
+{% include "inventory/tutorial_modal.html" %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTransferModal(assetId, assetTag) {
+  document.getElementById('modal-transfer').classList.remove('hidden');
+  document.getElementById('transfer-asset-label').textContent = `Équipement : ${assetTag}`;
+  document.getElementById('transfer-form').action = `/inventory/assets/${assetId}/transfer/`;
+}
+
+function closeTransferModal() {
+  document.getElementById('modal-transfer').classList.add('hidden');
+}
+</script>
 {% endblock %}
