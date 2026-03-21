@@ -29,6 +29,11 @@ class CustomUser(AbstractUser):
     global_progress = models.FloatField(default=0.0, help_text='Progression globale 0-100%')
     total_xp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
+    has_seen_inventory_tutorial = models.BooleanField(
+        default=False,
+        verbose_name='A vu le tutoriel inventaire',
+        help_text='Ne plus afficher le tutoriel interactif du Module 3 Inventaire.',
+    )
 
     class Meta:
         verbose_name = 'Utilisateur'

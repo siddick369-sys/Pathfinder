@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     # AMN Employee Hub
     'learning',
     'attendance',
+    'inventory',
     # Celery
     'django_celery_beat',
     'django_celery_results',

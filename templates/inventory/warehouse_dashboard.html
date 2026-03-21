@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+
+{% block title %}{% trans "Warehouse — Inventaire AMN" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg: #F9FAFB;
+    --card: #FFFFFF;
+    --border: #E5E7EB;
+    --text: #111827;
+    --muted: #6B7280;
+    --primary: #6366F1;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --radius: 24px;
+    --shadow: 0 2px 16px rgba(0,0,0,.06);
+  }
+  body { background: var(--bg); }
+
+  .inv-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%);
+    border-radius: 0 0 32px 32px;
+    padding: 32px 24px 28px;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    border: 1px solid var(--border);
+    transition: transform .2s, box-shadow .2s;
+    cursor: default;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.1); }
+
+  .tab-btn {
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    background: transparent;
+    color: var(--muted);
+  }
+  .tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99,102,241,.35);
+  }
+
+  .stock-row {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: box-shadow .15s;
+  }
+  .stock-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  .stock-row.low  { border-left: 4px solid var(--warning); }
+  .stock-row.critical { border-left: 4px solid var(--danger); }
+
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .badge-success { background: #dcfce7; color: #166534; }
+  .badge-warning { background: #fef3c7; color: #92400e; }
+  .badge-danger  { background: #fee2e2; color: #991b1b; }
+  .badge-primary { background: #ede9fe; color: #5b21b6; }
+  .badge-secondary { background: #f3f4f6; color: #374151; }
+
+  .btn-icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    border: none; cursor: pointer; font-size: 15px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .btn-plus  { background: #dcfce7; color: #16a34a; }
+  .btn-minus { background: #fee2e2; color: #dc2626; }
+  .btn-plus:hover  { background: #16a34a; color: #fff; transform: scale(1.1); }
+  .btn-minus:hover { background: #dc2626; color: #fff; transform: scale(1.1); }
+
+  .asset-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar-tag {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: #ede9fe; color: #6366f1;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 12px; flex-shrink: 0;
+    letter-spacing: -.5px;
+  }
+
+  #qr-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 5000;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  #qr-modal.open { display: flex; }
+  #qr-box {
+    background: #fff; border-radius: 24px; padding: 32px;
+    max-width: 380px; width: 100%; text-align: center;
+  }
+  #reader { border-radius: 16px; overflow: hidden; margin: 16px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- TUTORIEL -->
+{% include "inventory/tutorial_modals.html" %}
+
+<!-- HEADER -->
+<div class="inv-header">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+                    opacity:.75;margin-bottom:4px;">AMN Employee Hub</div>
+        <h1 style="font-size:26px;font-weight:900;margin:0;line-height:1.15;">
+          🏭 {% trans "Warehouse Dashboard" %}
+        </h1>
+        <p style="margin:6px 0 0;opacity:.8;font-size:14px;">
+          {% trans "Gestion d'actifs, stock consommables & support technique" %}
+        </p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="document.getElementById('qr-modal').classList.add('open')"
+                style="padding:10px 18px;border:2px solid rgba(255,255,255,.4);border-radius:14px;
+                       background:rgba(255,255,255,.15);color:#fff;font-weight:700;
+                       font-size:14px;cursor:pointer;backdrop-filter:blur(4px);">
+          📷 {% trans "Scanner QR" %}
+        </button>
+        <a href="{% url 'inventory:ticket_create' %}"
+           style="padding:10px 18px;border:none;border-radius:14px;
+                  background:#ef4444;color:#fff;font-weight:700;font-size:14px;
+                  text-decoration:none;box-shadow:0 4px 12px rgba(239,68,68,.4);">
+          🆘 {% trans "Ticket SOS" %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:0 auto;padding:0 16px 40px;">
+
+  <!-- KPI CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="stat-card">
+      <div style="font-size:28px;margin-bottom:6px;">📦</div>
+      <div style="font-size:26px;font-weight:900;color:var(--text);">{{ total_stock_items }}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Articles en stock" %}</div>
+    </div>
+    <div class="stat-card" style="{% if critical_stock_items %}border-color:#fecaca;{% elif low_stock_items %}border-color:#fde68a;{% endif %}">
+      <div style="font-size:28px;margin-bottom:6px;">⚠️</div>
+      <div style="font-size:26px;font-weight:900;color:{% if critical_stock_items %}var(--danger){% elif low_stock_items %}var(--warning){% else %}var(--success){% endif %};">
+        {{ low_stock_items|length }}
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Alertes stock" %}</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:28px;margin-bottom:6px;">💻</div>
+      <div style="font-size:26px;font-weight:900;color:var(--text);">{{ total_assets }}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Actifs totaux" %}</div>
+    </div>
+    <div class="stat-card" style="{% if sos_tickets %}border-color:#fecaca;{% endif %}">
+      <div style="font-size:28px;margin-bottom:6px;">🎫</div>
+      <div style="font-size:26px;font-weight:900;color:{% if sos_tickets %}var(--danger){% else %}var(--text){% endif %};">
+        {{ open_tickets }}
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600;">{% trans "Tickets ouverts" %}</div>
+    </div>
+    {% if sos_tickets %}
+    <div class="stat-card" style="border-color:#fecaca;background:#fff1f2;">
+      <div style="font-size:28px;margin-bottom:6px;">🔴</div>
+      <div style="font-size:26px;font-weight:900;color:var(--danger);">{{ sos_tickets }}</div>
+      <div style="font-size:12px;color:#991b1b;font-weight:700;">{% trans "SOS Critiques" %}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ONGLETS -->
+  <div style="background:var(--card);border-radius:18px;padding:6px;
+              display:inline-flex;gap:4px;box-shadow:var(--shadow);margin-bottom:20px;
+              border:1px solid var(--border);">
+    <button class="tab-btn {% if active_tab == 'stock' %}active{% endif %}"
+            onclick="switchTab('stock')">
+      📦 {% trans "Stock Global" %}
+    </button>
+    <button class="tab-btn {% if active_tab == 'assets' %}active{% endif %}"
+            onclick="switchTab('assets')">
+      💻 {% trans "Actifs Individuels" %}
+    </button>
+    <button class="tab-btn {% if active_tab == 'tickets' %}active{% endif %}"
+            onclick="switchTab('tickets')">
+      🎫 {% trans "Tickets" %}
+      {% if sos_tickets %}<span style="background:#ef4444;color:#fff;border-radius:999px;
+               padding:1px 7px;font-size:11px;margin-left:4px;">{{ sos_tickets }}</span>{% endif %}
+    </button>
+  </div>
+
+  <!-- ─── ONGLET STOCK ─── -->
+  <div id="tab-stock" class="tab-content" {% if active_tab != 'stock' %}style="display:none"{% endif %}>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <form method="get" style="display:flex;gap:8px;flex:1;max-width:360px;">
+        <input type="hidden" name="tab" value="stock">
+        <input type="text" name="stock_q" value="{{ stock_search }}" placeholder="{% trans 'Rechercher un article…' %}"
+               style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:12px;
+                      font-size:14px;background:#f9fafb;outline:none;">
+        <button type="submit" style="padding:10px 16px;background:var(--primary);color:#fff;
+                border:none;border-radius:12px;cursor:pointer;font-weight:700;">🔍</button>
+      </form>
+      <a href="{% url 'inventory:stock_create' %}"
+         style="padding:10px 20px;background:var(--primary);color:#fff;border-radius:14px;
+                font-weight:700;font-size:14px;text-decoration:none;
+                box-shadow:0 4px 12px rgba(99,102,241,.3);">
+        + {% trans "Nouvel article" %}
+      </a>
+    </div>
+
+    {% if low_stock_items %}
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;
+                padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">⚠️</span>
+      <div>
+        <strong style="color:#92400e;">{% trans "Alerte stock bas" %}</strong>
+        <p style="margin:2px 0 0;font-size:13px;color:#78350f;">
+          {{ low_stock_items|length }} {% trans "article(s) nécessitent un réapprovisionnement." %}
+          {% if critical_stock_items %}
+            <strong style="color:#dc2626;">{{ critical_stock_items|length }} en rupture totale.</strong>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% for item in stock_page %}
+    <div class="stock-row {{ item.stock_status }}" id="stock-row-{{ item.pk }}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:var(--text);font-size:15px;">{{ item.name }}</div>
+        <div style="font-size:12px;color:var(--muted);">{{ item.sku }} {% if item.location %}· {{ item.location }}{% endif %}</div>
+      </div>
+      <div style="text-align:center;min-width:90px;">
+        {% with item.stock_badge as badge %}
+        <span class="badge-pill badge-{{ badge.0 }}" id="badge-{{ item.pk }}">
+          {{ badge.1 }} <span id="qty-{{ item.pk }}">{{ item.quantity }}</span> {{ item.get_unit_display }}
+        </span>
+        {% endwith %}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+          seuil : {{ item.alert_threshold }}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn-icon btn-minus"
+                onclick="quickAdjust({{ item.pk }}, 'out')"
+                title="{% trans 'Sortie' %}">−</button>
+        <button class="btn-icon btn-plus"
+                onclick="quickAdjust({{ item.pk }}, 'in')"
+                title="{% trans 'Entrée' %}">+</button>
+        <a href="{% url 'inventory:stock_transactions' item.pk %}"
+           style="padding:6px 10px;background:#f3f4f6;border-radius:10px;
+                  color:var(--muted);font-size:12px;text-decoration:none;font-weight:600;">
+          📋
+        </a>
+        {% if user.is_staff %}
+        <a href="{% url 'inventory:stock_edit' item.pk %}"
+           style="padding:6px 10px;background:#ede9fe;border-radius:10px;
+                  color:#6366f1;font-size:12px;text-decoration:none;font-weight:600;">
+          ✏️
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:48px 20px;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:12px;">📦</div>
+      <p style="font-size:16px;font-weight:600;">{% trans "Aucun article en stock." %}</p>
+      <a href="{% url 'inventory:stock_create' %}" style="color:var(--primary);font-weight:700;">
+        + {% trans "Ajouter le premier article" %}
+      </a>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if stock_page.has_other_pages %}
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:16px;">
+      {% if stock_page.has_previous %}
+      <a href="?tab=stock&stock_page={{ stock_page.previous_page_number }}&stock_q={{ stock_search }}"
+         style="padding:8px 16px;background:var(--card);border:1px solid var(--border);
+                border-radius:10px;font-size:13px;color:var(--text);text-decoration:none;">←</a>
+      {% endif %}
+      <span style="padding:8px 16px;background:var(--primary);color:#fff;
+                   border-radius:10px;font-size:13px;font-weight:700;">
+        {{ stock_page.number }} / {{ stock_page.paginator.num_pages }}
+      </span>
+      {% if stock_page.has_next %}
+      <a href="?tab=stock&stock_page={{ stock_page.next_page_number }}&stock_q={{ stock_search }}"
+         style="padding:8px 16px;background:var(--card);border:1px solid var(--border);
+                border-radius:10px;font-size:13px;color:var(--text);text-decoration:none;">→</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ─── ONGLET ACTIFS ─── -->
+  <div id="tab-assets" class="tab-content" {% if active_tab != 'assets' %}style="display:none"{% endif %}>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <form method="get" style="display:flex;gap:8px;flex:1;max-width:360px;">
+        <input type="hidden" name="tab" value="assets">
+        <input type="text" name="asset_q" value="{{ asset_search }}" placeholder="{% trans 'Tag AMN, nom, marque…' %}"
+               style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:#f9fafb;">
+        <button type="submit" style="padding:10px 16px;background:var(--primary);color:#fff;
+                border:none;border-radius:12px;cursor:pointer;font-weight:700;">🔍</button>
+      </form>
+      <a href="{% url 'inventory:asset_create' %}"
+         style="padding:10px 20px;background:var(--primary);color:#fff;border-radius:14px;
+                font-weight:700;font-size:14px;text-decoration:none;">
+        + {% trans "Nouvel actif" %}
+      </a>
+    </div>
+
+    {% for asset in assets_page %}
+    <div class="asset-row">
+      <div class="avatar-tag">{{ asset.amn_tag|slice:"-4:" }}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:var(--text);">{{ asset.amn_tag }}</div>
+        <div style="font-size:13px;color:var(--muted);">{{ asset.name }} {% if asset.brand %}· {{ asset.brand }}{% endif %}</div>
+      </div>
+      <span class="badge-pill badge-{{ asset.status_color }}">
+        {{ asset.status_icon }} {{ asset.get_status_display }}
+      </span>
+      <div style="font-size:13px;color:var(--muted);min-width:120px;text-align:right;">
+        {% if asset.assigned_to %}{{ asset.assigned_to }}{% else %}—{% endif %}
+      </div>
+      <a href="{% url 'inventory:asset_detail' asset.pk %}"
+         style="padding:7px 14px;background:#ede9fe;border-radius:10px;
+                color:#6366f1;font-size:13px;text-decoration:none;font-weight:700;">
+        {% trans "Voir" %}
+      </a>
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:48px 20px;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:12px;">💻</div>
+      <p style="font-size:16px;font-weight:600;">{% trans "Aucun actif enregistré." %}</p>
+    </div>
+    {% endfor %}
+
+    {% if assets_page.has_other_pages %}
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:16px;">
+      {% if assets_page.has_previous %}
+      <a href="?tab=assets&asset_page={{ assets_page.previous_page_number }}&asset_q={{ asset_search }}"
+         style="padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text);text-decoration:none;">←</a>
+      {% endif %}
+      <span style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:10px;font-size:13px;font-weight:700;">
+        {{ assets_page.number }} / {{ assets_page.paginator.num_pages }}
+      </span>
+      {% if assets_page.has_next %}
+      <a href="?tab=assets&asset_page={{ assets_page.next_page_number }}&asset_q={{ asset_search }}"
+         style="padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text);text-decoration:none;">→</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ─── ONGLET TICKETS ─── -->
+  <div id="tab-tickets" class="tab-content" {% if active_tab != 'tickets' %}style="display:none"{% endif %}>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;font-weight:800;">{% trans "Tickets récents" %}</h3>
+      <a href="{% url 'inventory:ticket_list' %}"
+         style="padding:10px 20px;background:var(--card);border:1px solid var(--border);
+                color:var(--text);border-radius:14px;font-weight:700;font-size:14px;text-decoration:none;">
+        {% trans "Voir tous les tickets" %} →
+      </a>
+    </div>
+    {% for ticket in recent_tickets %}
+    <a href="{% url 'inventory:ticket_detail' ticket.pk %}" style="text-decoration:none;">
+      <div class="stock-row" style="{% if ticket.is_sos %}border-left:4px solid #ef4444;background:#fff1f2;{% endif %}">
+        <div style="font-size:20px;">{{ ticket.priority_icon }}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;color:var(--text);">
+            {% if ticket.is_sos %}<span style="color:#ef4444;">[SOS]</span> {% endif %}
+            {{ ticket.subject }}
+          </div>
+          <div style="font-size:12px;color:var(--muted);">
+            #{{ ticket.ticket_number }} · {{ ticket.submitted_by }} · {{ ticket.created_at|timesince }} {% trans "ago" %}
+          </div>
+        </div>
+        <span class="badge-pill badge-{{ ticket.status_color }}">{{ ticket.get_status_display }}</span>
+      </div>
+    </a>
+    {% empty %}
+    <div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:40px;margin-bottom:10px;">🎫</div>
+      <p>{% trans "Aucun ticket ouvert." %}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- QR MODAL -->
+<div id="qr-modal">
+  <div id="qr-box">
+    <h3 style="font-size:18px;font-weight:800;color:#0f172a;margin:0 0 4px;">
+      📷 {% trans "Scanner un QR Code" %}
+    </h3>
+    <p style="color:#64748b;font-size:13px;margin:0 0 12px;">{% trans "Pointez la caméra sur le QR code de l'actif ou de l'article." %}</p>
+    <div id="reader"></div>
+    <div id="qr-result" style="display:none;background:#f0fdf4;border-radius:12px;padding:14px;text-align:left;margin-top:10px;"></div>
+    <button onclick="stopScanner()" style="margin-top:16px;padding:10px 24px;background:#f3f4f6;
+            border:none;border-radius:12px;cursor:pointer;font-weight:700;color:#374151;width:100%;">
+      {% trans "Fermer" %}
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const CSRF = document.cookie.match('(^|;) ?csrftoken=([^;]*)(;|$)')?.[2] || '';
+let html5QrCode = null;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  event.target.classList.add('active');
+}
+
+// Quick adjust +/-
+function quickAdjust(pk, direction) {
+  const modal = `
+    <div id="adj-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.4);
+         backdrop-filter:blur(4px);z-index:8000;display:flex;
+         align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:20px;padding:28px;max-width:340px;width:90%;">
+        <h4 style="margin:0 0 16px;font-size:17px;font-weight:800;">
+          ${direction === 'in' ? '📥 Entrée' : '📤 Sortie'}
+        </h4>
+        <label style="font-size:13px;font-weight:600;color:#374151;">Quantité</label>
+        <input type="number" id="adj-qty" value="1" min="1"
+               style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;
+                      font-size:16px;margin:6px 0 12px;box-sizing:border-box;">
+        <label style="font-size:13px;font-weight:600;color:#374151;">Motif (optionnel)</label>
+        <input type="text" id="adj-reason" placeholder="Raison…"
+               style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;
+                      font-size:14px;margin:6px 0 16px;box-sizing:border-box;">
+        <div style="display:flex;gap:8px;">
+          <button onclick="document.getElementById('adj-modal').remove()"
+                  style="flex:1;padding:11px;background:#f3f4f6;border:none;border-radius:12px;
+                         font-weight:700;cursor:pointer;">Annuler</button>
+          <button onclick="submitAdj(${pk}, '${direction}')"
+                  style="flex:2;padding:11px;background:${direction==='in'?'#22c55e':'#ef4444'};
+                         border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;">
+            Confirmer
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modal);
+  document.getElementById('adj-qty').focus();
+}
+
+function submitAdj(pk, direction) {
+  const qty = parseInt(document.getElementById('adj-qty').value) || 1;
+  const reason = document.getElementById('adj-reason').value;
+
+  const fd = new FormData();
+  fd.append('direction', direction);
+  fd.append('quantity', qty);
+  fd.append('reason', reason);
+
+  fetch(`/inventaire/stock/${pk}/ajuster/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    body: fd,
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('adj-modal').remove();
+    if (data.status === 'ok') {
+      // Mise à jour en temps réel
+      document.getElementById('qty-' + pk).textContent = data.new_quantity;
+      const badge = document.getElementById('badge-' + pk);
+      badge.className = `badge-pill badge-${data.badge_color}`;
+      const row = document.getElementById('stock-row-' + pk);
+      row.className = 'stock-row ' + (data.stock_status !== 'ok' ? data.stock_status : '');
+      showToast(direction === 'in' ? '✅ Stock mis à jour !' : '📤 Sortie enregistrée', 'success');
+    } else {
+      showToast('❌ ' + (data.error || 'Erreur'), 'error');
+    }
+  })
+  .catch(() => showToast('❌ Erreur réseau', 'error'));
+}
+
+function showToast(msg, type) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  const bg = type === 'success' ? '#22c55e' : '#ef4444';
+  toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;
+    background:${bg};color:#fff;padding:12px 20px;border-radius:14px;
+    font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);
+    animation:fadeInUp .3s ease;`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// QR Scanner
+function startQRScanner() {
+  html5QrCode = new Html5Qrcode('reader');
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    (decodedText) => {
+      html5QrCode.stop();
+      fetch(`/inventaire/qr-scan/?code=${encodeURIComponent(decodedText)}`)
+        .then(r => r.json())
+        .then(data => {
+          const el = document.getElementById('qr-result');
+          el.style.display = 'block';
+          if (data.found) {
+            el.innerHTML = `<strong>${data.name}</strong><br><small>${data.type === 'asset' ? '🏷️ ' + data.amn_tag : '📦 ' + data.sku}</small>
+              <br><a href="${data.redirect_url}" style="color:#6366f1;font-weight:700;">Voir les détails →</a>`;
+          } else {
+            el.style.background = '#fff1f2';
+            el.textContent = '❌ Code non reconnu : ' + decodedText;
+          }
+        });
+    },
+    () => {}
+  ).catch(err => console.log('QR error', err));
+}
+
+function stopScanner() {
+  if (html5QrCode) html5QrCode.stop().catch(() => {});
+  document.getElementById('qr-modal').classList.remove('open');
+  document.getElementById('qr-result').style.display = 'none';
+}
+
+document.getElementById('qr-modal').addEventListener('click', function(e) {
+  if (e.target === this) stopScanner();
+});
+
+// Démarrer le scanner quand on ouvre la modal
+const qrBtn = document.querySelector('[onclick*="qr-modal"]');
+if (qrBtn) qrBtn.addEventListener('click', () => setTimeout(startQRScanner, 300));
+</script>
+
+<style>
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+</style>
+{% endblock %}
