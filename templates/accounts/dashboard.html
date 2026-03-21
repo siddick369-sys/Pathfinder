@@ -190,6 +190,57 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* Quick access module cards */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .module-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.2rem 1rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        border: 2px solid transparent;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 28px rgba(0,0,0,0.13);
+        text-decoration: none;
+        color: inherit;
+    }
+    .module-card .mc-icon {
+        font-size: 2rem;
+        line-height: 1;
+    }
+    .module-card .mc-title {
+        font-weight: 700;
+        font-size: 0.88rem;
+    }
+    .module-card .mc-desc {
+        font-size: 0.73rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    .module-card .mc-badge {
+        font-size: 0.68rem;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    @media(max-width:768px) {
+        .modules-grid { grid-template-columns: repeat(2, 1fr); }
+    }
 </style>
 {% endblock %}
 
@@ -214,6 +265,51 @@
             <div class="actions">
                 <span class="xp-badge">{{ user_level_icon }} {{ user.total_xp|intcomma }} XP · {{ user_level_name }}</span>
             </div>
+        </div>
+
+        <!-- Accès rapide aux modules -->
+        <h2 class="steps-title" style="margin-top:0;margin-bottom:16px;">🧭 Accès rapide</h2>
+        <div class="modules-grid">
+            <a href="{% url 'attendance:dashboard' %}" class="module-card" style="border-color:#19875422;">
+                <div class="mc-icon">📅</div>
+                <div class="mc-title">Présences</div>
+                <div class="mc-desc">Pointer, congés, historique</div>
+            </a>
+            <a href="{% url 'learning:list' %}" class="module-card" style="border-color:#0d6efd22;">
+                <div class="mc-icon">📚</div>
+                <div class="mc-title">Formation</div>
+                <div class="mc-desc">Modules & leçons en ligne</div>
+            </a>
+            <a href="{% url 'competences:list' %}" class="module-card" style="border-color:#6610f222;">
+                <div class="mc-icon">🎯</div>
+                <div class="mc-title">Compétences</div>
+                <div class="mc-desc">Développer mes compétences</div>
+            </a>
+            <a href="{% url 'orientation:test' %}" class="module-card" style="border-color:#fd7e1422;">
+                <div class="mc-icon">🧭</div>
+                <div class="mc-title">Orientation</div>
+                <div class="mc-desc">Test & recommandation métier</div>
+            </a>
+            <a href="{% url 'parcours:career' %}" class="module-card" style="border-color:#0dcaf022;">
+                <div class="mc-icon">🚀</div>
+                <div class="mc-title">Mon Parcours</div>
+                <div class="mc-desc">Étapes de ma carrière</div>
+            </a>
+            <a href="{% url 'gamification:leaderboard' %}" class="module-card" style="border-color:#eab30822;">
+                <div class="mc-icon">🏆</div>
+                <div class="mc-title">Classement</div>
+                <div class="mc-desc">Voir le leaderboard XP</div>
+            </a>
+            <a href="{% url 'gamification:shop' %}" class="module-card" style="border-color:#dc354522;">
+                <div class="mc-icon">🛍️</div>
+                <div class="mc-title">Boutique</div>
+                <div class="mc-desc">Dépenser mes points XP</div>
+            </a>
+            <a href="{% url 'blog:list' %}" class="module-card" style="border-color:#20c99722;">
+                <div class="mc-icon">📰</div>
+                <div class="mc-title">Blog & Actus</div>
+                <div class="mc-desc">Articles & actualités AMN</div>
+            </a>
         </div>
 
         <!-- Career recommendation -->

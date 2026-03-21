@@ -35,7 +35,23 @@ INSTALLED_APPS = [
     'feedback',
     'notifications',
     'core',
+    # AMN Employee Hub
+    'learning',
+    'attendance',
+    'inventory',
+    # Celery
+    'django_celery_beat',
+    'django_celery_results',
 ]
+
+# ── Celery ──
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Douala'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # ── Auth ──
 AUTH_USER_MODEL = 'accounts.CustomUser'

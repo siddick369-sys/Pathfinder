@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Ouvrir un ticket SOS — AMN" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #F9FAFB; }
+  .form-card {
+    background: #fff; border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    border: 1px solid #E5E7EB;
+    max-width: 680px; margin: 0 auto;
+    overflow: hidden;
+  }
+  .form-card-header {
+    background: linear-gradient(135deg,#ef4444,#f97316);
+    padding: 28px 32px 24px; color: #fff;
+  }
+  .form-card-body { padding: 28px 32px; }
+  label { font-size:13px; font-weight:700; color:#374151; margin-bottom:5px; display:block; }
+  .form-group { margin-bottom:18px; }
+  .priority-selector { display:flex; gap:8px; flex-wrap:wrap; }
+  .priority-btn {
+    flex:1; min-width:110px; padding:10px 12px; border-radius:12px;
+    border:2px solid #e5e7eb; background:#fff; cursor:pointer;
+    font-size:13px; font-weight:700; text-align:center;
+    transition:all .15s;
+  }
+  .priority-btn.selected-low      { border-color:#6b7280; background:#f3f4f6; }
+  .priority-btn.selected-medium   { border-color:#3b82f6; background:#eff6ff; color:#1d4ed8; }
+  .priority-btn.selected-high     { border-color:#f59e0b; background:#fffbeb; color:#92400e; }
+  .priority-btn.selected-critical { border-color:#ef4444; background:#fee2e2; color:#991b1b; }
+  .btn-submit {
+    width:100%; padding:15px; border:none; border-radius:16px;
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff; font-size:16px; font-weight:800;
+    cursor:pointer; box-shadow:0 6px 18px rgba(239,68,68,.4);
+    transition:all .15s;
+  }
+  .btn-submit:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(239,68,68,.5); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "inventory/tutorial_modals.html" %}
+
+<div style="max-width:720px;margin:32px auto;padding:0 16px 48px;">
+
+  <!-- BACK -->
+  <a href="{% url 'inventory:my_assets' %}" style="display:inline-flex;align-items:center;gap:6px;
+     color:#6b7280;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:20px;">
+    ← {% trans "Retour à mon bureau" %}
+  </a>
+
+  <div class="form-card">
+    <div class="form-card-header">
+      <div style="font-size:36px;margin-bottom:8px;">🆘</div>
+      <h1 style="font-size:22px;font-weight:900;margin:0 0 6px;">{% trans "Ouvrir un Ticket SOS" %}</h1>
+      <p style="margin:0;opacity:.85;font-size:14px;">
+        {% trans "Décrivez votre problème. Notre équipe technique intervient rapidement." %}
+      </p>
+    </div>
+
+    <div class="form-card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <!-- SUJET -->
+        <div class="form-group">
+          <label>{% trans "Sujet *" %}</label>
+          {{ form.subject }}
+          {% if form.subject.errors %}
+          <div style="color:#ef4444;font-size:12px;margin-top:4px;">{{ form.subject.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <!-- CATÉGORIE + PRIORITÉ -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label>{% trans "Catégorie *" %}</label>
+            {{ form.category }}
+          </div>
+          <div class="form-group">
+            <label>{% trans "Priorité *" %}</label>
+            {{ form.priority }}
+          </div>
+        </div>
+
+        <!-- ALERTE SOS -->
+        <div id="sos-alert" style="display:none;background:#fee2e2;border:1px solid #fca5a5;
+             border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+          <p style="margin:0;font-size:13px;color:#991b1b;font-weight:600;">
+            🔴 {% trans "Priorité Critique sélectionnée. Le staff sera notifié immédiatement." %}
+          </p>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+          <label>{% trans "Description du problème *" %}</label>
+          {{ form.description }}
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
+            {% trans "Soyez précis : quand ça a commencé, ce que vous avez essayé, le numéro de poste…" %}
+          </div>
+        </div>
+
+        <!-- ACTIF CONCERNÉ -->
+        <div class="form-group">
+          <label>{% trans "Actif concerné (optionnel)" %}</label>
+          {{ form.related_asset }}
+        </div>
+
+        <!-- PHOTO -->
+        <div class="form-group">
+          <label>📸 {% trans "Photo de la panne (optionnel)" %}</label>
+          <div style="border:2px dashed #d1d5db;border-radius:14px;padding:20px;text-align:center;
+                      background:#f9fafb;cursor:pointer;"
+               onclick="document.getElementById('id_breakdown_photo').click()">
+            <div style="font-size:28px;margin-bottom:6px;">📷</div>
+            <div style="font-size:13px;color:#6b7280;font-weight:600;">
+              {% trans "Cliquez pour choisir une photo" %}
+            </div>
+            <div id="photo-name" style="font-size:12px;color:#6366f1;margin-top:4px;"></div>
+          </div>
+          <div style="display:none;">{{ form.breakdown_photo }}</div>
+        </div>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="btn-submit">
+          🚀 {% trans "Envoyer le ticket" %}
+        </button>
+
+        <p style="text-align:center;font-size:12px;color:#9ca3af;margin-top:14px;">
+          {% trans "Vous serez notifié par email et dans l'application à chaque mise à jour." %}
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Alerte SOS si priorité critique
+document.getElementById('id_priority').addEventListener('change', function() {
+  document.getElementById('sos-alert').style.display = this.value === 'critical' ? 'block' : 'none';
+});
+
+// Aperçu du nom de fichier photo
+document.getElementById('id_breakdown_photo').addEventListener('change', function() {
+  const name = this.files[0]?.name || '';
+  document.getElementById('photo-name').textContent = name ? '📎 ' + name : '';
+});
+</script>
+{% endblock %}

@@ -19,6 +19,9 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('notifications/', include('notifications.urls')),
     path('feedback/', include('feedback.urls')),
+    path('formations/', include('learning.urls')),
+    path('presences/', include('attendance.urls')),
+    path('inventaire/', include('inventory.urls', namespace='inventory')),
 ]
 
 if settings.DEBUG:

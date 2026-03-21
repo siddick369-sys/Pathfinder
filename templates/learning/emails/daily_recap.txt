@@ -1,0 +1,47 @@
+========================================
+RÉCAPITULATIF QUOTIDIEN AMN
+Africa Mobile Network — {{ today|date:"d/m/Y" }}
+========================================
+
+Bonjour {{ user.first_name|default:user.username }},
+
+{% if has_activity %}
+{% if lessons_today %}
+🎓 FORMATIONS DU JOUR ({{ lessons_today|length }} leçon(s))
+{% for lp in lessons_today %}
+  ✅ {{ lp.lesson.title }} — {{ lp.lesson.course.module.title }} (+{{ lp.lesson.xp_reward }} XP)
+{% endfor %}
+{% endif %}
+
+{% if completed_today %}
+🏆 MODULES COMPLÉTÉS
+{% for e in completed_today %}
+  🎉 {{ e.module.title }} — Félicitations !
+{% endfor %}
+{% endif %}
+
+{% if attendance_today %}
+📅 PRÉSENCE DU JOUR
+  Statut : {{ attendance_today.get_status_display }}
+  {% if attendance_today.check_in %}Arrivée : {{ attendance_today.check_in|time:"H:i" }}{% endif %}
+  {% if attendance_today.check_out %}Départ : {{ attendance_today.check_out|time:"H:i" }}{% endif %}
+  {% if attendance_today.working_hours %}Heures : {{ attendance_today.duration_display }}{% endif %}
+{% endif %}
+
+📊 PROGRESSION GLOBALE
+  Formations inscrites : {{ total_enrollments }}
+  Formations terminées : {{ total_completed }}
+  Certificats obtenus  : {{ total_certificates }}
+
+{% else %}
+💡 Pas d'activité enregistrée aujourd'hui.
+Vous avez {{ total_enrollments }} formation(s) en cours. Continuez votre progression !
+{% endif %}
+
+{% if certificates_today %}
+🏅 NOUVEAU(X) CERTIFICAT(S) : {{ certificates_today.count }} obtenu(s) aujourd'hui !
+{% endif %}
+
+--
+Africa Mobile Network — Système de formation interne
+Ce message est envoyé automatiquement chaque jour à 18h00.

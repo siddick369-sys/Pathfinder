@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}#{{ ticket.ticket_number }} — {{ ticket.subject }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #F9FAFB; }
+  .ticket-hero {
+    background: linear-gradient(135deg,{% if ticket.is_sos %}#ef4444,#dc2626{% else %}#6366f1,#8b5cf6{% endif %});
+    border-radius: 0 0 28px 28px;
+    padding: 28px 24px 24px; color:#fff; margin-bottom:24px;
+  }
+  .card { background:#fff; border-radius:20px; border:1px solid #e5e7eb;
+          box-shadow:0 2px 14px rgba(0,0,0,.06); margin-bottom:20px; overflow:hidden; }
+  .card-h { padding:16px 22px 12px; border-bottom:1px solid #e5e7eb; }
+  .card-b { padding:18px 22px; }
+  .badge { display:inline-flex; align-items:center; gap:4px;
+           padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; }
+  .badge-danger   { background:#fee2e2; color:#991b1b; }
+  .badge-warning  { background:#fef3c7; color:#92400e; }
+  .badge-success  { background:#dcfce7; color:#166534; }
+  .badge-primary  { background:#ede9fe; color:#5b21b6; }
+  .badge-secondary{ background:#f3f4f6; color:#374151; }
+  .badge-dark     { background:#1f2937; color:#f9fafb; }
+  .comment-bubble {
+    border-radius:14px; padding:12px 16px; margin-bottom:12px;
+  }
+  .comment-staff  { background:#eff6ff; border:1px solid #bfdbfe; }
+  .comment-user   { background:#f9fafb; border:1px solid #e5e7eb; }
+  .comment-internal { background:#fdf4ff; border:1px solid #e9d5ff; }
+  label { font-size:13px;font-weight:700;color:#374151;margin-bottom:4px;display:block; }
+  select, textarea { width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;
+                     font-size:14px;background:#f9fafb;box-sizing:border-box; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ticket-hero">
+  <div style="max-width:860px;margin:0 auto;">
+    <a href="{% url 'inventory:ticket_list' %}"
+       style="color:rgba(255,255,255,.75);font-size:13px;text-decoration:none;font-weight:600;">
+      ← {% trans "Retour aux tickets" %}
+    </a>
+    <div style="margin-top:12px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:36px;">{{ ticket.priority_icon }}</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;opacity:.75;text-transform:uppercase;">
+          #{{ ticket.ticket_number }} · {{ ticket.get_category_display }}
+        </div>
+        <h1 style="font-size:21px;font-weight:900;margin:4px 0 8px;line-height:1.2;">{{ ticket.subject }}</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-{{ ticket.status_color }}">{{ ticket.get_status_display }}</span>
+          <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;">
+            {{ ticket.priority_icon }} {{ ticket.get_priority_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:860px;margin:0 auto;padding:0 16px 48px;display:grid;
+            grid-template-columns:1fr minmax(0,300px);gap:20px;">
+
+  <!-- COLONNE PRINCIPALE -->
+  <div>
+    <!-- Description -->
+    <div class="card">
+      <div class="card-h">
+        <h3 style="margin:0;font-size:15px;font-weight:800;color:#111827;">📋 {% trans "Description" %}</h3>
+      </div>
+      <div class="card-b">
+        <p style="color:#374151;line-height:1.7;white-space:pre-wrap;margin:0;">{{ ticket.description }}</p>
+        {% if ticket.breakdown_photo %}
+        <div style="margin-top:16px;">
+          <img src="{{ ticket.breakdown_photo.url }}" alt="Photo panne"
+               style="max-width:100%;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Commentaires -->
+    <div class="card">
+      <div class="card-h">
+        <h3 style="margin:0;font-size:15px;font-weight:800;color:#111827;">💬 {% trans "Fil de discussion" %}</h3>
+      </div>
+      <div class="card-b">
+        {% for comment in comments %}
+        <div class="comment-bubble {% if comment.author.is_staff %}comment-staff{% elif comment.is_internal %}comment-internal{% else %}comment-user{% endif %}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:#6366f1;
+                        color:#fff;display:flex;align-items:center;justify-content:center;
+                        font-size:11px;font-weight:800;flex-shrink:0;">
+              {{ comment.author.first_name|slice:":1"|upper }}{{ comment.author.last_name|slice:":1"|upper }}
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#111827;">{{ comment.author }}</div>
+              <div style="font-size:11px;color:#9ca3af;">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+            {% if comment.is_internal %}
+            <span style="background:#e9d5ff;color:#6b21a8;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-left:auto;">
+              🔒 {% trans "Interne" %}
+            </span>
+            {% endif %}
+          </div>
+          <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">{{ comment.content }}</p>
+        </div>
+        {% empty %}
+        <p style="color:#9ca3af;font-size:14px;text-align:center;padding:16px 0;">
+          {% trans "Aucun message pour l'instant." %}
+        </p>
+        {% endfor %}
+
+        <!-- Formulaire commentaire -->
+        <form method="post" style="margin-top:16px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="comment">
+          <label>{% trans "Ajouter un commentaire" %}</label>
+          {{ comment_form.content }}
+          {% if user.is_staff %}
+          <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+            {{ comment_form.is_internal }}
+            <label style="margin:0;font-size:13px;color:#374151;font-weight:600;">
+              {% trans "Note interne (non visible par l'employé)" %}
+            </label>
+          </div>
+          {% endif %}
+          <button type="submit"
+                  style="margin-top:10px;padding:10px 22px;background:#6366f1;color:#fff;
+                         border:none;border-radius:12px;font-weight:700;cursor:pointer;">
+            {% trans "Envoyer" %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLONNE LATÉRALE -->
+  <div>
+    <!-- Infos -->
+    <div class="card">
+      <div class="card-h">
+        <h3 style="margin:0;font-size:14px;font-weight:800;color:#111827;">ℹ️ {% trans "Informations" %}</h3>
+      </div>
+      <div class="card-b" style="font-size:13px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <div style="color:#9ca3af;font-weight:600;font-size:11px;text-transform:uppercase;">{% trans "Soumis par" %}</div>
+            <div style="font-weight:700;color:#111827;margin-top:2px;">{{ ticket.submitted_by }}</div>
+          </div>
+          <div>
+            <div style="color:#9ca3af;font-weight:600;font-size:11px;text-transform:uppercase;">{% trans "Date" %}</div>
+            <div style="font-weight:600;color:#374151;margin-top:2px;">{{ ticket.created_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          {% if ticket.assigned_to %}
+          <div>
+            <div style="color:#9ca3af;font-weight:600;font-size:11px;text-transform:uppercase;">{% trans "Assigné à" %}</div>
+            <div style="font-weight:700;color:#6366f1;margin-top:2px;">{{ ticket.assigned_to }}</div>
+          </div>
+          {% endif %}
+          {% if ticket.related_asset %}
+          <div>
+            <div style="color:#9ca3af;font-weight:600;font-size:11px;text-transform:uppercase;">{% trans "Actif concerné" %}</div>
+            <div style="font-weight:600;color:#374151;margin-top:2px;">
+              <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">{{ ticket.related_asset.amn_tag }}</code>
+              {{ ticket.related_asset.name }}
+            </div>
+          </div>
+          {% endif %}
+          {% if ticket.resolved_at %}
+          <div>
+            <div style="color:#9ca3af;font-weight:600;font-size:11px;text-transform:uppercase;">{% trans "Résolu le" %}</div>
+            <div style="font-weight:600;color:#22c55e;margin-top:2px;">{{ ticket.resolved_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes de résolution -->
+    {% if ticket.resolution_notes %}
+    <div class="card" style="border-color:#bbf7d0;">
+      <div class="card-h" style="background:#f0fdf4;">
+        <h3 style="margin:0;font-size:14px;font-weight:800;color:#166534;">✅ {% trans "Résolution" %}</h3>
+      </div>
+      <div class="card-b">
+        <p style="color:#374151;font-size:13px;line-height:1.6;margin:0;">{{ ticket.resolution_notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Mise à jour statut (staff only) -->
+    {% if status_form %}
+    <div class="card">
+      <div class="card-h">
+        <h3 style="margin:0;font-size:14px;font-weight:800;color:#111827;">⚙️ {% trans "Mettre à jour" %}</h3>
+      </div>
+      <div class="card-b">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_status">
+          <div style="margin-bottom:12px;">
+            <label>{% trans "Statut" %}</label>
+            {{ status_form.status }}
+          </div>
+          <div style="margin-bottom:12px;">
+            <label>{% trans "Assigner à" %}</label>
+            {{ status_form.assigned_to }}
+          </div>
+          <div style="margin-bottom:14px;">
+            <label>{% trans "Notes de résolution" %}</label>
+            {{ status_form.resolution_notes }}
+          </div>
+          <button type="submit"
+                  style="width:100%;padding:11px;background:#6366f1;color:#fff;border:none;
+                         border-radius:12px;font-weight:700;cursor:pointer;font-size:14px;">
+            {% trans "Enregistrer" %}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

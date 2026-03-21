@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Formations AMN — Module 2{% endblock %}
+
+{% block extra_css %}
+<style>
+.amn-header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d6efd 100%);
+    color: white;
+    padding: 3rem 0 2rem;
+    margin-bottom: 2rem;
+}
+.amn-header h1 { font-size: 2rem; font-weight: 700; }
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-top: 4px solid #0d6efd;
+}
+.stat-card .stat-number { font-size: 2rem; font-weight: 700; color: #0d6efd; }
+.stat-card .stat-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; }
+.module-card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.module-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.module-card-img {
+    height: 180px;
+    object-fit: cover;
+    width: 100%;
+    background: linear-gradient(135deg, #1a3a5c, #0d6efd);
+}
+.module-card-img-placeholder {
+    height: 180px;
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d6efd 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+.module-card-body { padding: 1.2rem; flex: 1; display: flex; flex-direction: column; }
+.module-card-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
+.module-card-desc { font-size: 0.85rem; color: #6c757d; flex: 1; }
+.module-card-footer { padding: 1rem 1.2rem; background: #f8f9fa; border-top: 1px solid #e9ecef; }
+.badge-level { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-debutant { background: #d1fae5; color: #065f46; }
+.badge-intermediaire { background: #fef3c7; color: #92400e; }
+.badge-avance { background: #fee2e2; color: #991b1b; }
+.progress-bar-module { height: 6px; border-radius: 3px; background: #e9ecef; }
+.progress-bar-module .fill { height: 100%; border-radius: 3px; background: #0d6efd; }
+.filter-bar { background: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+.mandatory-badge { background: #dc3545; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header AMN -->
+<div class="amn-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="mb-1" style="opacity:0.8;font-size:0.9rem;">🏢 Africa Mobile Network — Espace Formation</p>
+                <h1>📚 Mes Formations</h1>
+                <p style="opacity:0.9;">Développez vos compétences et progressez dans votre carrière AMN.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'learning:my_learning' %}" class="btn btn-light btn-sm">
+                    🎓 Mon tableau de bord
+                </a>
+                <a href="{% url 'attendance:dashboard' %}" class="btn btn-outline-light btn-sm ms-2">
+                    📅 Mes présences
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_modules }}</div>
+                <div class="stat-label">Modules disponibles</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.enrolled }}</div>
+                <div class="stat-label">Mes inscriptions</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.completed }}</div>
+                <div class="stat-label">Terminés</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.certificates }}</div>
+                <div class="stat-label">Certificats</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-bar d-flex flex-wrap gap-2 align-items-center">
+        <span style="font-weight:600;font-size:0.9rem;">🔍 Filtrer :</span>
+        <a href="{% url 'learning:list' %}" class="btn btn-sm {% if not dept_filter and not level_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">Tous</a>
+        {% for dept in departments %}
+        <a href="?dept={{ dept.code }}" class="btn btn-sm {% if dept_filter == dept.code %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ dept.icon }} {{ dept.name }}</a>
+        {% endfor %}
+        <span class="ms-2" style="font-weight:600;font-size:0.9rem;">Niveau :</span>
+        <a href="?level=debutant{% if dept_filter %}&dept={{ dept_filter }}{% endif %}" class="btn btn-sm {% if level_filter == 'debutant' %}btn-success{% else %}btn-outline-success{% endif %}">🟢 Débutant</a>
+        <a href="?level=intermediaire{% if dept_filter %}&dept={{ dept_filter }}{% endif %}" class="btn btn-sm {% if level_filter == 'intermediaire' %}btn-warning{% else %}btn-outline-warning{% endif %}">🟡 Intermédiaire</a>
+        <a href="?level=avance{% if dept_filter %}&dept={{ dept_filter }}{% endif %}" class="btn btn-sm {% if level_filter == 'avance' %}btn-danger{% else %}btn-outline-danger{% endif %}">🔴 Avancé</a>
+    </div>
+
+    <!-- Modules -->
+    <div class="row g-4">
+        {% for module in modules %}
+        <div class="col-sm-6 col-lg-4">
+            <div class="module-card">
+                <!-- Image -->
+                {% if module.cover_image_url %}
+                <img src="{{ module.cover_image_url }}" alt="{{ module.title }}" class="module-card-img">
+                {% else %}
+                <div class="module-card-img-placeholder">
+                    {% if module.department %}{{ module.department.icon }}{% else %}📱{% endif %}
+                </div>
+                {% endif %}
+
+                <div class="module-card-body">
+                    <div class="d-flex align-items-start gap-2 mb-2">
+                        <span class="badge bg-secondary" style="font-size:0.7rem;">Module {{ module.number }}</span>
+                        <span class="badge-level badge-{{ module.level }}">{{ module.get_level_display }}</span>
+                        {% if module.is_mandatory %}<span class="mandatory-badge">Obligatoire</span>{% endif %}
+                    </div>
+                    <div class="module-card-title">{{ module.title }}</div>
+                    <div class="module-card-desc">{{ module.description|truncatechars:100 }}</div>
+
+                    <div class="mt-2 d-flex gap-3" style="font-size:0.8rem;color:#6c757d;">
+                        <span>📚 {{ module.get_courses_count }} cours</span>
+                        <span>⏱️ {{ module.duration_hours }}h</span>
+                        <span>👥 {{ module.get_enrolled_count }}</span>
+                    </div>
+
+                    {% if module.user_enrollment %}
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between" style="font-size:0.75rem;color:#6c757d;">
+                            <span>{{ module.user_enrollment.get_status_display }}</span>
+                            <span>{{ module.user_enrollment.progress_percent|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress-bar-module mt-1">
+                            <div class="fill" style="width:{{ module.user_enrollment.progress_percent }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="module-card-footer">
+                    {% if module.department %}
+                    <small class="text-muted">{{ module.department.icon }} {{ module.department.name }}</small>
+                    {% endif %}
+                    <div class="mt-2">
+                        <a href="{% url 'learning:module_detail' slug=module.slug %}" class="btn btn-primary btn-sm w-100">
+                            {% if module.user_enrollment %}
+                                {% if module.user_enrollment.status == 'completed' %}✅ Revoir{% else %}▶️ Continuer{% endif %}
+                            {% else %}
+                                🔍 Voir le module
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p style="font-size:3rem;">📭</p>
+            <p class="text-muted">Aucun module trouvé pour ces filtres.</p>
+            <a href="{% url 'learning:list' %}" class="btn btn-outline-primary">Voir tous les modules</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

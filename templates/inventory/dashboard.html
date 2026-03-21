@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+
+{% block title %}{% trans "Warehouse — Stock & Équipements" %} | AMN Hub{% endblock %}
+
+{% block extra_head %}
+<!-- html5-qrcode -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F9FAFB] px-4 py-8 sm:px-8">
+
+  <!-- ── En-tête ── -->
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">🏭 {% trans "Warehouse" %}</h1>
+      <p class="text-slate-500 mt-1">{% trans "Gestion du stock global et des équipements AMN" %}</p>
+    </div>
+    <div class="flex gap-3">
+      <!-- Alertes rapides -->
+      {% if critical_stock_items %}
+      <span class="inline-flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 rounded-2xl px-4 py-2 text-sm font-semibold">
+        🔴 {{ critical_stock_items|length }} {% trans "Critique(s)" %}
+      </span>
+      {% endif %}
+      {% if low_stock_items %}
+      <span class="inline-flex items-center gap-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-2xl px-4 py-2 text-sm font-semibold">
+        🟠 {{ low_stock_items|length }} {% trans "Stock bas" %}
+      </span>
+      {% endif %}
+      {% if sos_tickets %}
+      <a href="{% url 'inventory:helpdesk' %}" class="inline-flex items-center gap-2 bg-red-600 text-white rounded-2xl px-4 py-2 text-sm font-semibold shadow hover:bg-red-700 transition-colors">
+        🚨 {{ sos_tickets.count }} SOS
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Tabs ── -->
+  <div class="flex gap-2 mb-6 bg-white rounded-3xl p-1.5 shadow-sm border border-slate-100 w-fit">
+    <button onclick="switchTab('stock')" id="tab-stock"
+      class="tab-btn px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all duration-200 {% if active_tab == 'stock' %}bg-indigo-600 text-white shadow{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+      📦 {% trans "Stock Global" %}
+    </button>
+    <button onclick="switchTab('assets')" id="tab-assets"
+      class="tab-btn px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all duration-200 {% if active_tab != 'stock' %}bg-indigo-600 text-white shadow{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+      💻 {% trans "Équipements" %}
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- ONGLET 1 : STOCK GLOBAL -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="panel-stock" class="{% if active_tab != 'stock' %}hidden{% endif %}">
+
+    <!-- Actions rapides en-tête -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6 justify-between items-start sm:items-center">
+      <h2 class="text-xl font-bold text-slate-700">{% trans "Consommables & Fournitures" %}</h2>
+      <div class="flex gap-3">
+        <!-- QR Scanner -->
+        <button onclick="toggleQrScanner()" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 rounded-2xl px-4 py-2.5 text-sm font-semibold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm">
+          📷 {% trans "Scanner QR" %}
+        </button>
+        <!-- Ajouter article -->
+        <button onclick="openModal('modal-add-stock')" class="flex items-center gap-2 bg-indigo-600 text-white rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+          + {% trans "Nouvel article" %}
+        </button>
+      </div>
+    </div>
+
+    <!-- QR Scanner (caché par défaut) -->
+    <div id="qr-reader-container" class="hidden mb-6 bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-700">📷 {% trans "Scanner un article" %}</h3>
+        <button onclick="toggleQrScanner()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <div id="qr-reader" class="rounded-2xl overflow-hidden max-w-sm mx-auto"></div>
+      <p id="qr-result" class="text-center text-slate-500 mt-4 text-sm"></p>
+    </div>
+
+    <!-- Tableau stock -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50 border-b border-slate-100">
+            <tr>
+              <th class="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Article" %}</th>
+              <th class="text-center px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Quantité" %}</th>
+              <th class="text-center px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Seuil" %}</th>
+              <th class="text-center px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Niveau" %}</th>
+              <th class="text-center px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Emplacement" %}</th>
+              <th class="text-center px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for item in stock_items %}
+            <tr class="hover:bg-slate-50/50 transition-colors" id="stock-row-{{ item.pk }}">
+              <td class="px-6 py-4">
+                <div class="font-semibold text-slate-800">{{ item.name }}</div>
+                {% if item.description %}<div class="text-xs text-slate-400 mt-0.5">{{ item.description|truncatechars:50 }}</div>{% endif %}
+              </td>
+              <td class="px-4 py-4 text-center">
+                <span id="qty-{{ item.pk }}" class="text-2xl font-bold {% if item.is_critical_stock %}text-red-600{% elif item.is_low_stock %}text-orange-500{% else %}text-slate-800{% endif %}">
+                  {{ item.quantity }}
+                </span>
+                <span class="text-xs text-slate-400 block">{{ item.unit }}</span>
+              </td>
+              <td class="px-4 py-4 text-center text-sm text-slate-500">{{ item.alert_threshold }}</td>
+              <td class="px-4 py-4 text-center">
+                <span id="level-badge-{{ item.pk }}" class="inline-block px-3 py-1 rounded-full text-xs font-semibold
+                  {% if item.is_critical_stock %}bg-red-100 text-red-700
+                  {% elif item.is_low_stock %}bg-orange-100 text-orange-700
+                  {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                  {% if item.is_critical_stock %}🔴 {% trans "Critique" %}
+                  {% elif item.is_low_stock %}🟠 {% trans "Bas" %}
+                  {% else %}🟢 {% trans "OK" %}{% endif %}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-center text-sm text-slate-500">{{ item.location|default:"—" }}</td>
+              <td class="px-4 py-4">
+                <div class="flex items-center justify-center gap-2">
+                  <!-- Bouton - -->
+                  <button onclick="quickStock({{ item.pk }}, 'OUT')"
+                    class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-xl hover:bg-red-100 font-bold text-lg transition-colors active:scale-95">
+                    −
+                  </button>
+                  <!-- Bouton + -->
+                  <button onclick="quickStock({{ item.pk }}, 'IN')"
+                    class="w-10 h-10 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 font-bold text-lg transition-colors active:scale-95">
+                    +
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                <div class="text-4xl mb-3">📦</div>
+                <div class="font-medium">{% trans "Aucun article en stock" %}</div>
+                <div class="text-sm mt-1">{% trans "Cliquez sur « Nouvel article » pour commencer." %}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- ONGLET 2 : ÉQUIPEMENTS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="panel-assets" class="{% if active_tab == 'stock' %}hidden{% endif %}">
+
+    <div class="flex flex-col sm:flex-row gap-3 mb-6 justify-between items-start sm:items-center">
+      <div class="flex gap-4 text-sm text-slate-600">
+        <span class="font-semibold">{{ available_assets.count }} <span class="font-normal text-slate-400">{% trans "dispo" %}</span></span>
+        <span class="font-semibold">{{ assigned_assets.count }} <span class="font-normal text-slate-400">{% trans "assignés" %}</span></span>
+      </div>
+      <button onclick="openModal('modal-add-asset')" class="flex items-center gap-2 bg-indigo-600 text-white rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+        + {% trans "Nouvel équipement" %}
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for asset in assets %}
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="text-xs font-mono text-indigo-600 font-semibold mb-1">{{ asset.amn_tag }}</div>
+            <div class="font-bold text-slate-800">{{ asset.brand }}</div>
+            <div class="text-sm text-slate-500">{{ asset.get_category_display }}</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl text-xs font-semibold
+            {% if asset.status == 'AVAILABLE' %}bg-emerald-100 text-emerald-700
+            {% elif asset.status == 'ASSIGNED' %}bg-blue-100 text-blue-700
+            {% elif asset.status == 'IN_REPAIR' %}bg-orange-100 text-orange-700
+            {% else %}bg-slate-100 text-slate-500{% endif %}">
+            {{ asset.get_status_display }}
+          </span>
+        </div>
+        {% if asset.assigned_to %}
+        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
+          <div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+            {{ asset.assigned_to.initials }}
+          </div>
+          <span class="text-sm text-slate-600">{{ asset.assigned_to.get_full_name }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="col-span-3 py-16 text-center text-slate-400">
+        <div class="text-4xl mb-3">💻</div>
+        <div class="font-medium">{% trans "Aucun équipement enregistré" %}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL : Ajouter article de stock -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="modal-add-stock" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('modal-add-stock')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-fade-in">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800">📦 {% trans "Nouvel article de stock" %}</h3>
+        <button onclick="closeModal('modal-add-stock')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">✕</button>
+      </div>
+      <form method="post" action="{% url 'inventory:dashboard' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_stock_item">
+        <div class="space-y-4">
+          {{ stock_item_form.as_p }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="button" onclick="closeModal('modal-add-stock')" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">{% trans "Annuler" %}</button>
+          <button type="submit" class="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">{% trans "Ajouter" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : Ajouter équipement -->
+<div id="modal-add-asset" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('modal-add-asset')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-fade-in">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800">💻 {% trans "Nouvel équipement" %}</h3>
+        <button onclick="closeModal('modal-add-asset')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">✕</button>
+      </div>
+      <form method="post" action="{% url 'inventory:dashboard' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_asset">
+        <div class="space-y-4">
+          {{ asset_form.as_p }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="button" onclick="closeModal('modal-add-asset')" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">{% trans "Annuler" %}</button>
+          <button type="submit" class="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">{% trans "Ajouter" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : Mise à jour stock rapide -->
+<div id="modal-quick-stock" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('modal-quick-stock')"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-fade-in text-center">
+      <div id="quick-stock-icon" class="text-5xl mb-4"></div>
+      <h3 id="quick-stock-title" class="text-xl font-bold text-slate-800 mb-2"></h3>
+      <p id="quick-stock-item-name" class="text-slate-500 mb-6"></p>
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-slate-600 mb-2 text-left">{% trans "Quantité" %}</label>
+        <input type="number" id="quick-stock-qty" value="1" min="1"
+          class="w-full text-center text-2xl font-bold border-2 border-indigo-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-indigo-500">
+      </div>
+      <div class="mb-6">
+        <input type="text" id="quick-stock-reason" placeholder="{% trans "Motif (optionnel)" %}"
+          class="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400">
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal('modal-quick-stock')" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold">{% trans "Annuler" %}</button>
+        <button id="quick-stock-confirm" class="flex-1 py-3 rounded-2xl text-white font-semibold transition-colors">{% trans "Confirmer" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- TUTORIEL — inclure le composant partagé -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+{% if show_tutorial %}
+{% include "inventory/tutorial_modal.html" %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panel-stock').classList.toggle('hidden', tab !== 'stock');
+  document.getElementById('panel-assets').classList.toggle('hidden', tab === 'stock');
+  ['stock', 'assets'].forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    if (t === tab) {
+      btn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+      btn.classList.remove('text-slate-500');
+    } else {
+      btn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+      btn.classList.add('text-slate-500');
+    }
+  });
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── Quick Stock (+ / -) ───────────────────────────────────────────────────
+let _currentItemId = null;
+let _currentTxnType = null;
+
+function quickStock(itemId, type) {
+  _currentItemId = itemId;
+  _currentTxnType = type;
+  const isIn = type === 'IN';
+  document.getElementById('quick-stock-icon').textContent = isIn ? '📥' : '📤';
+  document.getElementById('quick-stock-title').textContent = isIn ? '{% trans "Entrée de stock" %}' : '{% trans "Sortie de stock" %}';
+  const confirm = document.getElementById('quick-stock-confirm');
+  confirm.className = `flex-1 py-3 rounded-2xl text-white font-semibold transition-colors ${isIn ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`;
+  confirm.onclick = confirmQuickStock;
+  document.getElementById('quick-stock-qty').value = 1;
+  document.getElementById('quick-stock-reason').value = '';
+  openModal('modal-quick-stock');
+}
+
+async function confirmQuickStock() {
+  const qty = parseInt(document.getElementById('quick-stock-qty').value, 10);
+  const reason = document.getElementById('quick-stock-reason').value;
+  if (!qty || qty < 1) return;
+
+  const formData = new FormData();
+  formData.append('quantity', qty);
+  formData.append('transaction_type', _currentTxnType);
+  formData.append('reason', reason);
+  formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+  try {
+    const res = await fetch(`/inventory/stock/${_currentItemId}/update/`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      // Mettre à jour l'UI sans recharger
+      document.getElementById(`qty-${_currentItemId}`).textContent = data.new_quantity;
+      const badge = document.getElementById(`level-badge-${_currentItemId}`);
+      const levelMap = {
+        ok: { cls: 'bg-emerald-100 text-emerald-700', text: '🟢 {% trans "OK" %}' },
+        low: { cls: 'bg-orange-100 text-orange-700', text: '🟠 {% trans "Bas" %}' },
+        critical: { cls: 'bg-red-100 text-red-700', text: '🔴 {% trans "Critique" %}' },
+      };
+      const level = levelMap[data.stock_level];
+      badge.className = `inline-block px-3 py-1 rounded-full text-xs font-semibold ${level.cls}`;
+      badge.innerHTML = level.text;
+      closeModal('modal-quick-stock');
+      showToast(`✅ ${data.item_name} mis à jour`);
+    } else {
+      showToast(`❌ ${data.error}`, true);
+    }
+  } catch(e) {
+    showToast('❌ Erreur réseau', true);
+  }
+}
+
+// ── QR Scanner ────────────────────────────────────────────────────────────
+let html5QrcodeScanner = null;
+
+function toggleQrScanner() {
+  const container = document.getElementById('qr-reader-container');
+  const isHidden = container.classList.contains('hidden');
+  container.classList.toggle('hidden', !isHidden);
+
+  if (isHidden) {
+    html5QrcodeScanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 200 });
+    html5QrcodeScanner.render(onQrSuccess, onQrError);
+  } else if (html5QrcodeScanner) {
+    html5QrcodeScanner.clear().catch(() => {});
+    html5QrcodeScanner = null;
+  }
+}
+
+async function onQrSuccess(decodedText) {
+  // Format attendu: AMN-STOCK-{id}
+  const match = decodedText.match(/AMN-STOCK-(\d+)/);
+  if (match) {
+    const itemId = match[1];
+    const res = await fetch(`/inventory/stock/${itemId}/qr/`);
+    const data = await res.json();
+    if (!data.error) {
+      document.getElementById('qr-result').innerHTML =
+        `<strong>${data.name}</strong> — ${data.quantity} ${data.unit} <span class="ml-2">${data.stock_level === 'ok' ? '🟢' : data.stock_level === 'low' ? '🟠' : '🔴'}</span>`;
+    }
+  }
+}
+
+function onQrError() {} // ignore
+
+// ── Toast notification ────────────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = `fixed bottom-6 right-6 z-[9999] px-6 py-3 rounded-2xl shadow-xl text-white text-sm font-semibold transition-all ${isError ? 'bg-red-600' : 'bg-slate-800'}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+</script>
+{% endblock %}

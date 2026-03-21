@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; color: #333; }
+.container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.header { background: linear-gradient(135deg, #1a3a5c, #0d6efd); color: white; padding: 30px; text-align: center; }
+.header h1 { margin: 0; font-size: 1.5rem; }
+.header p { margin: 5px 0 0; opacity: 0.85; font-size: 0.9rem; }
+.body { padding: 30px; }
+.section { margin-bottom: 25px; }
+.section-title { font-size: 1rem; font-weight: 700; color: #1a3a5c; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 12px; }
+.stat-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.stat-box { flex: 1; text-align: center; padding: 12px; border-radius: 8px; }
+.stat-box .num { font-size: 1.5rem; font-weight: 700; }
+.stat-box .lbl { font-size: 0.75rem; color: #6c757d; }
+.lesson-item { padding: 8px 12px; background: #f0fff4; border-left: 3px solid #198754; border-radius: 4px; margin-bottom: 6px; font-size: 0.9rem; }
+.attendance-box { padding: 12px; background: #e7f1ff; border-radius: 8px; font-size: 0.9rem; }
+.btn { display: inline-block; padding: 10px 24px; background: #0d6efd; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; margin-top: 10px; }
+.footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 0.8rem; color: #6c757d; }
+.no-activity { text-align: center; padding: 20px; color: #6c757d; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <p style="font-size:0.8rem;opacity:0.7;margin-bottom:5px;">📱 Africa Mobile Network</p>
+        <h1>📋 Récapitulatif du jour</h1>
+        <p>{{ today|date:"l d F Y" }}</p>
+    </div>
+
+    <div class="body">
+        <p>Bonjour <strong>{{ user.first_name|default:user.username }}</strong>,</p>
+        <p>Voici votre récapitulatif quotidien AMN.</p>
+
+        {% if has_activity %}
+
+        <!-- Formations -->
+        {% if lessons_today %}
+        <div class="section">
+            <div class="section-title">🎓 Formations du jour</div>
+            {% for lp in lessons_today %}
+            <div class="lesson-item">
+                ✅ <strong>{{ lp.lesson.title }}</strong><br>
+                <small>{{ lp.lesson.course.module.title }} • +{{ lp.lesson.xp_reward }} XP</small>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if completed_today %}
+        <div class="section">
+            <div class="section-title">🏆 Modules complétés aujourd'hui</div>
+            {% for e in completed_today %}
+            <div style="padding:10px;background:#fff3cd;border-radius:6px;margin-bottom:6px;">
+                🎉 <strong>{{ e.module.title }}</strong> — Félicitations !
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- En cours -->
+        {% if in_progress %}
+        <div class="section">
+            <div class="section-title">📚 Formations en cours</div>
+            {% for e in in_progress %}
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:0.9rem;">
+                <div style="flex:1;">
+                    <strong>{{ e.module.title }}</strong>
+                    <div style="background:#e9ecef;height:6px;border-radius:3px;margin-top:3px;">
+                        <div style="background:#0d6efd;height:100%;width:{{ e.progress_percent }}%;border-radius:3px;"></div>
+                    </div>
+                </div>
+                <span style="font-weight:700;color:#0d6efd;">{{ e.progress_percent|floatformat:0 }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Présence -->
+        {% if attendance_today %}
+        <div class="section">
+            <div class="section-title">📅 Présence du jour</div>
+            <div class="attendance-box">
+                <div style="display:flex;gap:15px;">
+                    <div><strong>Statut:</strong> {{ attendance_today.get_status_display }}</div>
+                    {% if attendance_today.check_in %}<div><strong>Arrivée:</strong> {{ attendance_today.check_in|time:"H:i" }}</div>{% endif %}
+                    {% if attendance_today.check_out %}<div><strong>Départ:</strong> {{ attendance_today.check_out|time:"H:i" }}</div>{% endif %}
+                    {% if attendance_today.working_hours %}<div><strong>Heures:</strong> {{ attendance_today.duration_display }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats globales -->
+        <div class="section">
+            <div class="section-title">📊 Votre progression globale</div>
+            <div class="stat-row">
+                <div class="stat-box" style="background:#e7f1ff;">
+                    <div class="num" style="color:#0d6efd;">{{ total_enrollments }}</div>
+                    <div class="lbl">Formations</div>
+                </div>
+                <div class="stat-box" style="background:#d1fae5;">
+                    <div class="num" style="color:#198754;">{{ total_completed }}</div>
+                    <div class="lbl">Terminées</div>
+                </div>
+                <div class="stat-box" style="background:#fef3c7;">
+                    <div class="num" style="color:#92400e;">{{ total_certificates }}</div>
+                    <div class="lbl">Certificats</div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Pas d'activité -->
+        <div class="no-activity">
+            <p style="font-size:2.5rem;">💡</p>
+            <p><strong>Pas d'activité enregistrée aujourd'hui.</strong></p>
+            <p>Vous avez <strong>{{ total_enrollments }}</strong> formation(s) en cours. Continuez votre progression !</p>
+        </div>
+        {% endif %}
+
+        {% if certificates_today %}
+        <div style="padding:15px;background:linear-gradient(135deg,#ffd700,#ff8c00);border-radius:8px;color:white;text-align:center;margin-bottom:20px;">
+            🏅 <strong>Félicitations !</strong> Vous avez obtenu {{ certificates_today.count }} nouveau(x) certificat(s) aujourd'hui !
+        </div>
+        {% endif %}
+
+        <div style="text-align:center;">
+            <a href="#" class="btn">🚀 Accéder à ma formation</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>📱 <strong>Africa Mobile Network</strong> — Système de formation interne</p>
+        <p>Cameroun • Ce message est envoyé automatiquement chaque jour à 18h00</p>
+        <p><small>Pour vous désabonner, contactez votre responsable RH.</small></p>
+    </div>
+</div>
+</body>
+</html>

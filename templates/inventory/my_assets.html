@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+
+{% block title %}{% trans "Mon Bureau Digital" %} | AMN Hub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F9FAFB] px-4 py-8 sm:px-8">
+
+  <!-- ── En-tête ── -->
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">🖥️ {% trans "Mon Bureau Digital" %}</h1>
+      <p class="text-slate-500 mt-1">{% trans "Vos équipements AMN et vos tickets de support" %}</p>
+    </div>
+    <a href="{% url 'inventory:helpdesk' %}"
+      class="inline-flex items-center gap-2 bg-red-600 text-white rounded-2xl px-5 py-3 font-semibold hover:bg-red-700 transition-colors shadow-sm text-sm">
+      🚨 {% trans "Ouvrir un ticket SOS" %}
+      {% if open_tickets_count %}<span class="bg-white text-red-600 rounded-full px-2 text-xs font-bold">{{ open_tickets_count }}</span>{% endif %}
+    </a>
+  </div>
+
+  <!-- ── Mes équipements ── -->
+  <section class="mb-10">
+    <h2 class="text-xl font-bold text-slate-700 mb-5">🎒 {% trans "Mes équipements" %}</h2>
+
+    {% if my_assets %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for asset in my_assets %}
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-all">
+        <!-- Icône catégorie -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl">
+            {% if asset.category == 'LAPTOP' %}💻
+            {% elif asset.category == 'PHONE' %}📱
+            {% elif asset.category == 'TABLET' %}📲
+            {% elif asset.category == 'MONITOR' %}🖥️
+            {% elif asset.category == 'HEADSET' %}🎧
+            {% elif asset.category == 'BADGE' %}🪪
+            {% else %}📦{% endif %}
+          </div>
+          <span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-xl text-xs font-semibold">
+            {{ asset.amn_tag }}
+          </span>
+        </div>
+        <div class="font-bold text-slate-800 text-lg mb-0.5">{{ asset.brand }}</div>
+        <div class="text-sm text-slate-500 mb-4">{{ asset.get_category_display }}</div>
+        {% if asset.serial_number %}
+        <div class="text-xs text-slate-400 font-mono mb-4">S/N : {{ asset.serial_number }}</div>
+        {% endif %}
+
+        <!-- Bouton transfert P2P -->
+        <button onclick="openTransferModal({{ asset.pk }}, '{{ asset.amn_tag|escapejs }}')"
+          class="w-full mt-2 py-2.5 border border-slate-200 text-slate-600 rounded-2xl text-sm font-semibold hover:border-indigo-300 hover:text-indigo-600 transition-all">
+          🔄 {% trans "Transférer" %}
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm py-16 text-center">
+      <div class="text-5xl mb-4">📦</div>
+      <div class="font-semibold text-slate-600">{% trans "Aucun équipement ne vous est assigné" %}</div>
+      <div class="text-sm text-slate-400 mt-1">{% trans "Contactez votre manager si vous attendez du matériel." %}</div>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ── Mes tickets ── -->
+  <section>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-bold text-slate-700">🎫 {% trans "Mes tickets" %}</h2>
+      <a href="{% url 'inventory:helpdesk' %}" class="text-indigo-600 font-semibold text-sm hover:underline">{% trans "Voir tout →" %}</a>
+    </div>
+
+    {% if my_tickets %}
+    <div class="space-y-3">
+      {% for ticket in my_tickets|slice:":5" %}
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0
+          {% if ticket.priority == 'SOS' %}bg-red-100
+          {% elif ticket.priority == 'HIGH' %}bg-orange-100
+          {% elif ticket.priority == 'MEDIUM' %}bg-blue-100
+          {% else %}bg-slate-100{% endif %}">
+          {% if ticket.priority == 'SOS' %}🚨
+          {% elif ticket.priority == 'HIGH' %}🔥
+          {% elif ticket.priority == 'MEDIUM' %}⚠️
+          {% else %}ℹ️{% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-slate-800 truncate">{{ ticket.subject }}</div>
+          <div class="text-xs text-slate-400 mt-0.5">{{ ticket.created_at|naturaltime }}</div>
+        </div>
+        <span class="px-3 py-1 rounded-xl text-xs font-semibold flex-shrink-0
+          {% if ticket.status == 'OPEN' %}bg-blue-100 text-blue-700
+          {% elif ticket.status == 'IN_PROGRESS' %}bg-orange-100 text-orange-700
+          {% elif ticket.status == 'RESOLVED' %}bg-emerald-100 text-emerald-700
+          {% else %}bg-slate-100 text-slate-500{% endif %}">
+          {{ ticket.get_status_display }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm py-12 text-center">
+      <div class="text-4xl mb-3">✅</div>
+      <div class="font-semibold text-slate-600">{% trans "Aucun ticket ouvert" %}</div>
+      <div class="text-sm text-slate-400 mt-1">{% trans "Tout fonctionne bien !" %}</div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- ── Modal Transfert P2P ── -->
+<div id="modal-transfer" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeTransferModal()"></div>
+  <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-slate-800">🔄 {% trans "Transférer l'équipement" %}</h3>
+        <button onclick="closeTransferModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">✕</button>
+      </div>
+      <p class="text-slate-500 text-sm mb-6" id="transfer-asset-label"></p>
+      <form method="post" id="transfer-form">
+        {% csrf_token %}
+        <div class="space-y-4">
+          {{ transfer_form.as_p }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="button" onclick="closeTransferModal()" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold">{% trans "Annuler" %}</button>
+          <button type="submit" class="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">{% trans "Confirmer le transfert" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if show_tutorial %}
+{% include "inventory/tutorial_modal.html" %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTransferModal(assetId, assetTag) {
+  document.getElementById('modal-transfer').classList.remove('hidden');
+  document.getElementById('transfer-asset-label').textContent = `Équipement : ${assetTag}`;
+  document.getElementById('transfer-form').action = `/inventory/assets/${assetId}/transfer/`;
+}
+
+function closeTransferModal() {
+  document.getElementById('modal-transfer').classList.add('hidden');
+}
+</script>
+{% endblock %}
