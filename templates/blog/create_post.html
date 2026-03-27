@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Écrire un article — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .form-hero { text-align: center; margin-bottom: 24px }
+    .form-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .form-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .post-form { max-width: 700px; margin: 0 auto }
+    .post-form .card { padding: 32px }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .form-label small { font-weight: 400; color: var(--text-secondary) }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .form-input:focus { outline: none; border-color: var(--primary) }
+    textarea.form-input { resize: vertical; min-height: 200px }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>✍️ Écrire un article</h1>
+            <p>Partagez vos connaissances avec la communauté PathFinder (+40 XP)</p>
+        </div>
+        <div class="post-form">
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Titre de l'article</label>
+                        <input type="text" name="title" class="form-input" placeholder="Ex: Comment j'ai appris React en 3 mois" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Extrait <small>(résumé court)</small></label>
+                        <textarea name="excerpt" class="form-input" style="min-height:60px;" placeholder="Un résumé en 1-2 phrases..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catégorie</label>
+                        <select name="category" class="form-input">
+                            <option value="">— Choisir —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contenu</label>
+                        <textarea name="content" class="form-input" placeholder="Écrivez votre article ici..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Publier l'article →</button>
+                </form>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'blog:list' %}" class="btn btn-outline">← Blog</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Réserver — {{ profile.display_name }} — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .booking-form {
+        max-width: 600px;
+        margin: 0 auto
+    }
+
+    .booking-hero {
+        text-align: center;
+        margin-bottom: 24px
+    }
+
+    .booking-hero h1 {
+        font-size: 1.4rem;
+        margin-bottom: 8px
+    }
+
+    .booking-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .booking-form .card {
+        padding: 32px
+    }
+
+    .form-group {
+        margin-bottom: 20px
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 6px
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input, var(--bg-page));
+        font-family: var(--font);
+        font-size: 0.9rem;
+        color: var(--text);
+        box-sizing: border-box
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary)
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s
+    }
+
+    .radio-label:has(input:checked) {
+        border-color: var(--primary);
+        background: rgba(26, 86, 219, 0.06)
+    }
+
+    .radio-label input {
+        accent-color: var(--primary)
+    }
+
+    .free-intro-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: rgba(34, 197, 94, 0.08);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        margin-bottom: 20px
+    }
+
+    .free-intro-check input {
+        accent-color: #22c55e
+    }
+
+    .price-summary {
+        text-align: center;
+        padding: 16px;
+        background: var(--bg-page);
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px
+    }
+
+    .price-summary .amount {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--primary)
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:480px) {
+        .form-row {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="booking-hero animate-in">
+            <h1>📅 Réserver avec {{ profile.user.first_name }}</h1>
+            <p>{{ profile.hourly_rate_fcfa }} FCFA / 30 min</p>
+        </div>
+
+        <div class="booking-form">
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label class="form-label">Type de session</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="session_type" value="chat" checked> 💬 Chat
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="session_type" value="visio"> 📹 Visio
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="session_type" value="presentiel"> 🤝 Présentiel
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="date" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Créneau horaire</label>
+                            <select name="time_slot" class="form-input">
+                                <option value="08:00">08:00 - 08:30</option>
+                                <option value="09:00">09:00 - 09:30</option>
+                                <option value="10:00">10:00 - 10:30</option>
+                                <option value="11:00">11:00 - 11:30</option>
+                                <option value="14:00" selected>14:00 - 14:30</option>
+                                <option value="15:00">15:00 - 15:30</option>
+                                <option value="16:00">16:00 - 16:30</option>
+                                <option value="17:00">17:00 - 17:30</option>
+                                <option value="18:00">18:00 - 18:30</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sujet de la session</label>
+                        <input type="text" name="topic" class="form-input" placeholder="Ex: Aide sur mon projet React, préparation entretien...">
+                    </div>
+
+                    {% if not has_free_intro %}
+                    <div class="free-intro-check">
+                        <input type="checkbox" name="is_free_intro" id="free_intro">
+                        <label for="free_intro">🎁 Utiliser ma session découverte gratuite (15 min)</label>
+                    </div>
+                    {% endif %}
+
+                    <div class="price-summary">
+                        <div class="amount">{{ profile.hourly_rate_fcfa }} FCFA</div>
+                        <div style="font-size:0.8rem;color:var(--text-secondary);">Session de 30 minutes</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">Confirmer la réservation →</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'mentorat:detail' pk=profile.pk %}" class="btn btn-outline">← Retour au profil</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

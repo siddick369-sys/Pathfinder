@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Poster une mission — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .form-hero { text-align: center; margin-bottom: 24px }
+    .form-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .form-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .create-form { max-width: 600px; margin: 0 auto }
+    .create-form .card { padding: 32px }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .form-input:focus { outline: none; border-color: var(--primary) }
+    textarea.form-input { resize: vertical; min-height: 120px }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+    @media(max-width:480px) { .form-row { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>📝 Poster une mission</h1>
+            <p>Trouvez un étudiant talentueux pour réaliser votre projet</p>
+        </div>
+        <div class="create-form">
+            <div class="card animate-in">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Titre de la mission</label>
+                        <input type="text" name="title" class="form-input" placeholder="Ex: Créer un logo pour mon association" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description détaillée</label>
+                        <textarea name="description" class="form-input" placeholder="Décrivez le projet, les livrables attendus, le contexte..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie</label>
+                            <select name="category" class="form-input">
+                                <option value="">— Choisir —</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Budget (FCFA)</label>
+                            <input type="number" name="budget_fcfa" class="form-input" value="2000" min="500" step="500">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date limite</label>
+                        <input type="date" name="deadline" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Publier la mission →</button>
+                </form>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'marketplace:missions' %}" class="btn btn-outline">← Missions</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

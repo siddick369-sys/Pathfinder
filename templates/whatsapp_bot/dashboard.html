@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}WhatsApp — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .wa-hero { text-align: center; margin-bottom: 32px }
+    .wa-hero h1 { font-size: 1.6rem; margin-bottom: 8px }
+    .wa-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .wa-stats { display: flex; gap: 16px; justify-content: center; margin: 16px 0 32px; flex-wrap: wrap }
+    .wa-stat { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-full); background: rgba(34, 197, 94, 0.1); color: #16a34a; font-size: 0.8rem; font-weight: 600 }
+    .wa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 800px; margin: 0 auto }
+    .wa-grid .card { padding: 28px }
+    .wa-grid h2 { font-size: 1.1rem; margin-bottom: 16px }
+
+    .subscribe-form .form-group { margin-bottom: 16px }
+    .subscribe-form .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .subscribe-form .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .subscribe-form .form-input:focus { outline: none; border-color: var(--primary) }
+
+    .features-list { list-style: none; padding: 0 }
+    .features-list li { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-secondary) }
+    .features-list li:last-child { border-bottom: none }
+    .features-list .icon { font-size: 1.1rem; flex-shrink: 0 }
+
+    .settings-form label { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 0.85rem; cursor: pointer }
+    .settings-form input[type="checkbox"] { accent-color: #22c55e; width: 18px; height: 18px }
+
+    .lesson-preview { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; font-size: 0.8rem }
+    .lesson-preview .title { font-weight: 600; margin-bottom: 4px }
+    .lesson-preview .content { color: var(--text-secondary); line-height: 1.4 }
+    .lesson-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.6rem; font-weight: 600 }
+    .badge-free { background: rgba(34, 197, 94, 0.12); color: #16a34a }
+    .badge-premium { background: rgba(234, 179, 8, 0.12); color: #d97706 }
+
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+
+    @media(max-width:768px) { .wa-grid { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="wa-hero animate-in">
+            <h1>📱 WhatsApp PathFinder</h1>
+            <p>Recevez vos leçons, rappels et résultats directement sur WhatsApp</p>
+            <div class="wa-stats">
+                <span class="wa-stat">👥 {{ total_subscribers }} abonnés</span>
+                <span class="wa-stat">⭐ {{ total_premium }} premium</span>
+            </div>
+        </div>
+
+        <div class="wa-grid">
+            <!-- Inscription / Statut -->
+            <div class="card animate-in">
+                {% if subscriber %}
+                <h2>✅ Vous êtes inscrit</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">
+                    📞 {{ subscriber.phone_number }}<br>
+                    {% if subscriber.is_premium %}<span class="lesson-badge badge-premium">⭐ Premium</span>{% else %}<span class="lesson-badge badge-free">Gratuit</span>{% endif %}
+                </p>
+
+                <form method="post" action="{% url 'whatsapp:settings' %}" class="settings-form">
+                    {% csrf_token %}
+                    <h3 style="font-size:0.9rem;margin-bottom:8px;">Paramètres</h3>
+                    <label>
+                        <input type="checkbox" name="daily_lesson" {% if subscriber.daily_lesson_enabled %}checked{% endif %}>
+                        📚 Micro-leçon quotidienne
+                    </label>
+                    <label>
+                        <input type="checkbox" name="reminder" {% if subscriber.reminder_enabled %}checked{% endif %}>
+                        🔔 Rappels de défis et progression
+                    </label>
+                    <button type="submit" class="btn btn-outline btn-sm btn-full" style="margin-top:12px;">Enregistrer</button>
+                </form>
+
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                    <a href="{% url 'whatsapp:generate_share' %}" class="btn btn-primary btn-sm btn-full">📤 Partager mon résultat d'orientation</a>
+                </div>
+                {% else %}
+                <h2>📲 S'inscrire</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">
+                    Recevez vos cours et rappels sur WhatsApp !
+                </p>
+                <form method="post" action="{% url 'whatsapp:subscribe' %}" class="subscribe-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Numéro WhatsApp</label>
+                        <input type="tel" name="phone_number" class="form-input" placeholder="+237 6XX XXX XXX" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">S'inscrire gratuitement →</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Fonctionnalités -->
+            <div class="card animate-in">
+                <h2>🚀 Fonctionnalités WhatsApp</h2>
+                <ul class="features-list">
+                    <li><span class="icon">📚</span><span>Micro-leçons quotidiennes (2-3 min) dans votre fil WhatsApp</span></li>
+                    <li><span class="icon">🎯</span><span>Quiz d'orientation rapide directement dans le chat</span></li>
+                    <li><span class="icon">🔔</span><span>Rappels de défis et notifications de progression</span></li>
+                    <li><span class="icon">📤</span><span>Partagez votre résultat dans vos groupes WhatsApp</span></li>
+                    <li><span class="icon">💡</span><span>Commandes : PROGRESSION, DEFI, LEÇON, AIDE</span></li>
+                </ul>
+                <a href="{% url 'whatsapp:lessons' %}" class="btn btn-outline btn-sm btn-full" style="margin-top:16px;">📚 Voir les micro-leçons</a>
+            </div>
+        </div>
+
+        <!-- Aperçu des leçons -->
+        {% if lessons_preview %}
+        <div style="max-width:800px;margin:32px auto 0;">
+            <h2 style="font-size:1.1rem;margin-bottom:16px;">📚 Aperçu des micro-leçons</h2>
+            {% for lesson in lessons_preview %}
+            <div class="lesson-preview">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="title">{{ lesson.title }}</span>
+                    <span class="lesson-badge {% if lesson.level == 'free' %}badge-free{% else %}badge-premium{% endif %}">{{ lesson.get_level_display }}</span>
+                </div>
+                <p class="content">{{ lesson.content|truncatewords:30 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="nav-links">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

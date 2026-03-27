@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Parrainage — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .ref-hero { text-align: center; margin-bottom: 32px }
+    .ref-hero h1 { font-size: 1.6rem; margin-bottom: 8px }
+    .ref-hero p { color: var(--text-secondary); font-size: 0.9rem }
+
+    .ref-code-box {
+        max-width: 500px;
+        margin: 0 auto 32px;
+        text-align: center
+    }
+    .ref-code-box .card { padding: 32px }
+    .code-display {
+        display: inline-block;
+        padding: 12px 32px;
+        background: var(--bg-page);
+        border: 2px dashed var(--primary);
+        border-radius: var(--radius-sm);
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: var(--primary);
+        margin: 16px 0
+    }
+    .ref-stats { display: flex; gap: 24px; justify-content: center; margin-top: 16px }
+    .ref-stat { text-align: center }
+    .ref-stat strong { display: block; font-size: 1.3rem; color: var(--primary) }
+    .ref-stat span { font-size: 0.75rem; color: var(--text-secondary) }
+
+    .how-it-works { max-width: 500px; margin: 0 auto }
+    .how-it-works .card { padding: 24px }
+    .how-step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem }
+    .how-step:last-child { border-bottom: none }
+    .how-step .num { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0 }
+
+    .referrals-list { max-width: 500px; margin: 24px auto 0 }
+    .ref-item { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.85rem }
+    .ref-item:last-child { border-bottom: none }
+
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="ref-hero animate-in">
+            <h1>🤝 Parrainage PathFinder</h1>
+            <p>Invitez vos amis — vous gagnez 50 XP chacun !</p>
+        </div>
+
+        <div class="ref-code-box">
+            <div class="card animate-in">
+                <h2 style="font-size:1rem;margin-bottom:8px;">Votre code de parrainage</h2>
+                <div class="code-display">{{ referral_code }}</div>
+                <p style="font-size:0.8rem;color:var(--text-secondary);">Partagez ce code avec vos amis lors de leur inscription</p>
+                <div class="ref-stats">
+                    <div class="ref-stat">
+                        <strong>{{ referrals|length }}</strong>
+                        <span>Filleuls</span>
+                    </div>
+                    <div class="ref-stat">
+                        <strong>{{ total_xp_earned }}</strong>
+                        <span>XP gagnés</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="how-it-works">
+            <div class="card animate-in">
+                <h3 style="font-size:1rem;margin-bottom:16px;">Comment ça marche ?</h3>
+                <div class="how-step"><span class="num">1</span><span>Partagez votre code dans vos groupes WhatsApp</span></div>
+                <div class="how-step"><span class="num">2</span><span>Votre ami s'inscrit avec votre code</span></div>
+                <div class="how-step"><span class="num">3</span><span>Vous gagnez tous les deux 50 XP !</span></div>
+            </div>
+        </div>
+
+        {% if referrals %}
+        <div class="referrals-list">
+            <div class="card animate-in" style="padding:20px;">
+                <h3 style="font-size:1rem;margin-bottom:12px;">Mes filleuls</h3>
+                {% for ref in referrals %}
+                <div class="ref-item">
+                    <span>{{ ref.referred.first_name }} {{ ref.referred.last_name }}</span>
+                    <span style="color:var(--text-secondary);">{{ ref.created_at|date:"d/m/Y" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="nav-links">
+            <a href="{% url 'gamification:profile' %}" class="btn btn-outline">🏅 Mon profil</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

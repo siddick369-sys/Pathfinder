@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Soumettre un projet — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .form-hero { text-align: center; margin-bottom: 24px }
+    .form-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .form-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .project-form { max-width: 600px; margin: 0 auto }
+    .project-form .card { padding: 32px }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .form-label small { font-weight: 400; color: var(--text-secondary) }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    .form-input:focus { outline: none; border-color: var(--primary) }
+    textarea.form-input { resize: vertical; min-height: 120px }
+    .step-info { padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.85rem }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="form-hero animate-in">
+            <h1>📂 Soumettre un projet</h1>
+            <p>Montrez ce que vous avez appris — vos pairs vont évaluer votre travail</p>
+        </div>
+        <div class="project-form">
+            <div class="card animate-in">
+                <div class="step-info">
+                    <strong>{{ step.icon }} {{ step.title }}</strong><br>
+                    {{ step.description|truncatewords:25 }}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Titre du projet</label>
+                        <input type="text" name="title" class="form-input" placeholder="Ex: Mon premier site portfolio" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description <small>(ce que vous avez fait, les technologies utilisées)</small></label>
+                        <textarea name="description" class="form-input" placeholder="Décrivez votre projet..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lien du projet <small>(optionnel — GitHub, site live, etc.)</small></label>
+                        <input type="url" name="project_url" class="form-input" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Soumettre le projet →</button>
+                </form>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'parcours:career' %}" class="btn btn-outline">← Parcours</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

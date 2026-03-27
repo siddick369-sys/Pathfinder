@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Évaluer — {{ project.title }} — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .review-form { max-width: 600px; margin: 0 auto }
+    .review-form h1 { font-size: 1.4rem; text-align: center; margin-bottom: 24px }
+    .review-form .card { padding: 32px }
+    .project-summary { padding: 16px; background: var(--bg-page); border-radius: var(--radius-sm); margin-bottom: 20px }
+    .project-summary strong { display: block; font-size: 0.95rem; margin-bottom: 4px }
+    .project-summary p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5 }
+    .form-group { margin-bottom: 20px }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px }
+    .stars-input { display: flex; gap: 8px; font-size: 1.5rem; cursor: pointer }
+    .stars-input label { cursor: pointer; transition: transform 0.15s }
+    .stars-input label:hover { transform: scale(1.2) }
+    .stars-input input { display: none }
+    .form-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-input, var(--bg-page)); font-family: var(--font); font-size: 0.9rem; color: var(--text); box-sizing: border-box }
+    textarea.form-input { resize: vertical; min-height: 80px }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="review-form">
+            <h1>📝 Évaluer ce projet</h1>
+            <div class="card animate-in">
+                <div class="project-summary">
+                    <strong>{{ project.title }}</strong>
+                    <p>Par {{ project.user.first_name }} {{ project.user.last_name }}</p>
+                    <p style="margin-top:8px;">{{ project.description|truncatewords:50 }}</p>
+                    {% if project.project_url %}<p style="margin-top:4px;"><a href="{{ project.project_url }}" target="_blank" style="color:var(--primary);">🔗 Voir le projet</a></p>{% endif %}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Note</label>
+                        <div class="stars-input" id="starsInput">
+                            {% for i in "12345" %}
+                            <label data-value="{{ forloop.counter }}"><input type="radio" name="rating" value="{{ forloop.counter }}" {% if forloop.counter == 3 %}checked{% endif %}>{% if forloop.counter <= 3 %}★{% else %}☆{% endif %}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Commentaire constructif</label>
+                        <textarea name="feedback" class="form-input" placeholder="Points forts, axes d'amélioration..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Envoyer la revue (+15 XP) →</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('#starsInput label').forEach(label => {
+    label.addEventListener('click', function() {
+        const val = this.dataset.value;
+        this.querySelector('input').checked = true;
+        document.querySelectorAll('#starsInput label').forEach((l, i) => {
+            l.textContent = i < val ? '★' : '☆';
+        });
+    });
+});
+</script>
+{% endblock %}

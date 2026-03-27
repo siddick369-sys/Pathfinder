@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.display_name }} — Mentor — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .mentor-profile {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 24px
+    }
+
+    .profile-main .card {
+        padding: 28px;
+        margin-bottom: 20px
+    }
+
+    .profile-header {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 20px
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 700;
+        flex-shrink: 0
+    }
+
+    .profile-name h1 {
+        font-size: 1.4rem;
+        margin-bottom: 4px
+    }
+
+    .profile-name .uni {
+        font-size: 0.85rem;
+        color: var(--text-secondary)
+    }
+
+    .profile-name .tags {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap
+    }
+
+    .profile-name .tag {
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600
+    }
+
+    .tag-level {
+        background: rgba(234, 179, 8, 0.12);
+        color: #d97706
+    }
+
+    .tag-verified {
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a
+    }
+
+    .bio-text {
+        font-size: 0.9rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        margin-bottom: 20px
+    }
+
+    .specialties-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 20px
+    }
+
+    .spec-tag {
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary)
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 24px;
+        padding: 16px 0;
+        border-top: 1px solid var(--border)
+    }
+
+    .stat-item {
+        text-align: center
+    }
+
+    .stat-item strong {
+        display: block;
+        font-size: 1.2rem;
+        color: var(--text)
+    }
+
+    .stat-item span {
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .reviews-section h2 {
+        font-size: 1.1rem;
+        margin-bottom: 16px
+    }
+
+    .review-item {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .review-item:last-child {
+        border-bottom: none
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px
+    }
+
+    .review-author {
+        font-size: 0.85rem;
+        font-weight: 600
+    }
+
+    .review-stars {
+        color: #f59e0b;
+        font-size: 0.85rem
+    }
+
+    .review-text {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5
+    }
+
+    .review-date {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-top: 4px
+    }
+
+    /* Sidebar */
+    .sidebar .card {
+        padding: 24px;
+        margin-bottom: 16px
+    }
+
+    .sidebar .price-big {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 4px
+    }
+
+    .sidebar .price-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 16px
+    }
+
+    .sidebar .free-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a;
+        margin-bottom: 16px
+    }
+
+    .group-card {
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        margin-bottom: 12px
+    }
+
+    .group-card h4 {
+        font-size: 0.9rem;
+        margin-bottom: 4px
+    }
+
+    .group-card .group-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .mentor-profile {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="mentor-profile">
+            <!-- Main content -->
+            <div class="profile-main">
+                <div class="card animate-in">
+                    <div class="profile-header">
+                        <div class="profile-avatar">{{ profile.user.avatar_initials }}</div>
+                        <div class="profile-name">
+                            <h1>{{ profile.user.first_name }} {{ profile.user.last_name }}</h1>
+                            {% if profile.university %}<p class="uni">🏫 {{ profile.university }}</p>{% endif %}
+                            <div class="tags">
+                                <span class="tag tag-level">{{ profile.user.level_icon }} {{ profile.user.level_name }}</span>
+                                {% if profile.is_verified %}<span class="tag tag-verified">✅ Vérifié</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="bio-text">{{ profile.bio }}</p>
+
+                    <div class="specialties-list">
+                        {% for spec in profile.specialties %}
+                        <span class="spec-tag">{{ spec }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <strong style="color:#f59e0b;">{% if profile.average_rating > 0 %}{{ profile.average_rating }}/5{% else %}—{% endif %}</strong>
+                            <span>Note</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{{ profile.total_sessions }}</strong>
+                            <span>Sessions</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{{ profile.total_reviews }}</strong>
+                            <span>Avis</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{{ profile.user.total_xp }}</strong>
+                            <span>XP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="card animate-in">
+                    <div class="reviews-section">
+                        <h2>💬 Avis des mentorés</h2>
+                        {% for review in reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-author">{{ review.reviewer.first_name }} {{ review.reviewer.last_name }}</span>
+                                <span class="review-stars">
+                                    {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+                                </span>
+                            </div>
+                            {% if review.comment %}<p class="review-text">{{ review.comment }}</p>{% endif %}
+                            <p class="review-date">{{ review.created_at|date:"d/m/Y" }}</p>
+                        </div>
+                        {% empty %}
+                        <p style="color:var(--text-secondary);font-size:0.85rem;">Aucun avis pour le moment.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="card animate-in">
+                    <div class="price-big">{{ profile.hourly_rate_fcfa }} FCFA</div>
+                    <div class="price-label">par session de 30 minutes</div>
+                    {% if not has_free_intro %}
+                    <div class="free-tag">🎁 1re session de 15 min gratuite</div>
+                    {% endif %}
+                    <a href="{% url 'mentorat:book_session' mentor_id=profile.pk %}" class="btn btn-primary btn-full">📅 Réserver une session</a>
+                </div>
+
+                {% if groups %}
+                <div class="card animate-in">
+                    <h3 style="font-size:1rem;margin-bottom:12px;">👥 Groupes d'étude</h3>
+                    {% for group in groups %}
+                    <div class="group-card">
+                        <h4>{{ group.title }}</h4>
+                        <p class="group-meta">{{ group.members_count }}/{{ group.max_members }} membres · {{ group.price_per_member_fcfa }} FCFA</p>
+                        {% if not group.is_full %}
+                        <a href="{% url 'mentorat:join_group' group_id=group.pk %}" class="btn btn-outline btn-sm btn-full">Rejoindre</a>
+                        {% else %}
+                        <span class="btn btn-outline btn-sm btn-full" style="opacity:0.5;">Complet</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'mentorat:list' %}" class="btn btn-outline">← Tous les mentors</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

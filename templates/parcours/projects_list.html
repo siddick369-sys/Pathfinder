@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Projets — {{ step.title }} — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .projects-hero { text-align: center; margin-bottom: 32px }
+    .projects-hero h1 { font-size: 1.4rem; margin-bottom: 8px }
+    .projects-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto }
+    .project-card { padding: 24px; transition: all 0.3s }
+    .project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1) }
+    .project-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px }
+    .project-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700 }
+    .project-author .name { font-weight: 600; font-size: 0.9rem }
+    .project-author .meta { font-size: 0.7rem; color: var(--text-secondary) }
+    .project-card h3 { font-size: 0.95rem; margin-bottom: 6px }
+    .project-card .desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px }
+    .project-stats { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 12px }
+    .project-stats .stars { color: #f59e0b }
+    .status-pill { display: inline-block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-full) }
+    .status-submitted { background: rgba(234, 179, 8, 0.12); color: #d97706 }
+    .status-approved { background: rgba(34, 197, 94, 0.12); color: #16a34a }
+    .status-needs_revision { background: rgba(220, 38, 38, 0.1); color: #dc2626 }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+    @media(max-width:768px) { .projects-grid { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="projects-hero animate-in">
+            <h1>📂 Projets — {{ step.title }}</h1>
+            <p>Évaluez les projets de vos pairs et gagnez 15 XP par revue</p>
+        </div>
+
+        <div style="text-align:center;margin-bottom:24px;">
+            <a href="{% url 'parcours:submit_project' step_id=step.id %}" class="btn btn-primary">📤 Soumettre mon projet</a>
+        </div>
+
+        <div class="projects-grid">
+            {% for project in projects %}
+            <div class="card project-card animate-in">
+                <div class="project-header">
+                    <div class="project-avatar">{{ project.user.avatar_initials }}</div>
+                    <div class="project-author">
+                        <div class="name">{{ project.user.first_name }} {{ project.user.last_name }}</div>
+                        <div class="meta">{{ project.user.level_icon }} {{ project.user.level_name }} · {{ project.created_at|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+                <h3>{{ project.title }}</h3>
+                <p class="desc">{{ project.description|truncatewords:25 }}</p>
+                {% if project.project_url %}<p style="font-size:0.75rem;margin-bottom:8px;"><a href="{{ project.project_url }}" target="_blank" style="color:var(--primary);">🔗 Voir le projet</a></p>{% endif %}
+                <div class="project-stats">
+                    <span class="stars">{% if project.average_rating > 0 %}★ {{ project.average_rating }}/5{% else %}Pas encore noté{% endif %}</span>
+                    <span>📝 {{ project.reviews_count }} revues</span>
+                    <span class="status-pill status-{{ project.status }}">{{ project.get_status_display }}</span>
+                </div>
+                {% if project.user != user %}
+                <a href="{% url 'parcours:review_project' project_id=project.pk %}" class="btn btn-outline btn-sm btn-full">📝 Évaluer ce projet</a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">📂</p>
+                <h3>Aucun projet soumis</h3>
+                <p style="color:var(--text-secondary);">Soyez le premier à soumettre votre projet !</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'parcours:career' %}" class="btn btn-outline">← Mon parcours</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -45,3 +45,74 @@ class CareerStep(models.Model):
 
     def __str__(self):
         return f'{self.career.title} — Étape {self.order}: {self.title}'
+
+
+class StepProject(models.Model):
+    """Projet pratique soumis par un étudiant pour valider une étape."""
+    STATUS_CHOICES = [
+        ('submitted', 'Soumis'),
+        ('reviewing', 'En révision'),
+        ('approved', 'Approuvé'),
+        ('needs_revision', 'À réviser'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='step_projects')
+    step = models.ForeignKey(CareerStep, on_delete=models.CASCADE, related_name='projects')
+    title = models.CharField(max_length=200, verbose_name='Titre du projet')
+    description = models.TextField(verbose_name='Description')
+    project_url = models.URLField(blank=True, verbose_name='Lien du projet')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Projet d\'étape'
+        verbose_name_plural = 'Projets d\'étape'
+
+    def __str__(self):
+        return f'{self.user} — {self.title}'
+
+    @property
+    def reviews_count(self):
+        return self.peer_reviews.count()
+
+    @property
+    def average_rating(self):
+        reviews = self.peer_reviews.all()
+        if not reviews:
+            return 0
+        return round(sum(r.rating for r in reviews) / reviews.count(), 1)
+
+
+class PeerReview(models.Model):
+    """Évaluation par les pairs d'un projet."""
+    project = models.ForeignKey(StepProject, on_delete=models.CASCADE, related_name='peer_reviews')
+    reviewer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='given_reviews')
+    rating = models.IntegerField(verbose_name='Note (1-5)')
+    feedback = models.TextField(verbose_name='Commentaire')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['project', 'reviewer']
+        verbose_name = 'Revue par les pairs'
+        verbose_name_plural = 'Revues par les pairs'
+
+    def __str__(self):
+        return f'{self.reviewer} → {self.project.title}: {self.rating}/5'
+
+
+class StepCertificate(models.Model):
+    """Certificat généré après complétion d'une étape."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='certificates')
+    step = models.ForeignKey(CareerStep, on_delete=models.CASCADE, related_name='certificates')
+    certificate_code = models.CharField(max_length=30, unique=True)
+    share_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'step']
+        verbose_name = 'Certificat'
+        verbose_name_plural = 'Certificats'
+
+    def __str__(self):
+        return f'{self.user} — {self.step.title} [{self.certificate_code}]'

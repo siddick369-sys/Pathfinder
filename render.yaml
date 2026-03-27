@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: pathfinder
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn finder.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_5ROvAftCzGc2@ep-billowing-boat-akhfhwjq-pooler.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.11.11"

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Mentorat — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main {
+        padding: 32px 0 64px
+    }
+
+    .mentor-hero {
+        text-align: center;
+        margin-bottom: 32px
+    }
+
+    .mentor-hero h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px
+    }
+
+    .mentor-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem
+    }
+
+    .mentor-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 16px;
+        flex-wrap: wrap
+    }
+
+    .filters {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap
+    }
+
+    .filter-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: var(--font)
+    }
+
+    .filter-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary)
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary)
+    }
+
+    .mentors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px
+    }
+
+    .mentor-card {
+        padding: 24px;
+        transition: all 0.3s;
+        position: relative
+    }
+
+    .mentor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)
+    }
+
+    .mentor-card .verified {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        text-transform: uppercase
+    }
+
+    .mentor-header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px
+    }
+
+    .mentor-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        flex-shrink: 0
+    }
+
+    .mentor-info h3 {
+        font-size: 1rem;
+        margin-bottom: 2px
+    }
+
+    .mentor-info .uni {
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .mentor-info .level-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(234, 179, 8, 0.12);
+        color: #d97706;
+        margin-top: 4px
+    }
+
+    .mentor-bio {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        line-height: 1.5
+    }
+
+    .mentor-specialties {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px
+    }
+
+    .specialty-tag {
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(26, 86, 219, 0.1);
+        color: var(--primary)
+    }
+
+    .mentor-stats {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-top: 1px solid var(--border);
+        margin-bottom: 12px
+    }
+
+    .mentor-stat {
+        text-align: center;
+        font-size: 0.75rem;
+        color: var(--text-secondary)
+    }
+
+    .mentor-stat strong {
+        display: block;
+        font-size: 0.95rem;
+        color: var(--text);
+        margin-bottom: 2px
+    }
+
+    .mentor-stat .stars {
+        color: #f59e0b
+    }
+
+    .mentor-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 12px
+    }
+
+    .mentor-price small {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--text-secondary)
+    }
+
+    .free-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a;
+        margin-left: 8px
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 32px;
+        flex-wrap: wrap
+    }
+
+    @media(max-width:768px) {
+        .mentors-grid {
+            grid-template-columns: 1fr
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+
+        <div class="mentor-hero animate-in">
+            <h1>🎓 Réseau Mentorat</h1>
+            <p>Connectez-vous avec des mentors expérimentés pour accélérer votre parcours</p>
+            <div class="mentor-actions">
+                {% if is_mentor %}
+                <a href="{% url 'mentorat:my_profile' %}" class="btn btn-primary">👤 Mon profil mentor</a>
+                {% elif can_become_mentor %}
+                <a href="{% url 'mentorat:become_mentor' %}" class="btn btn-primary">🚀 Devenir mentor</a>
+                {% else %}
+                <span class="btn btn-outline" style="opacity:0.6;cursor:default;">🔒 Niveau 4 requis pour mentorer</span>
+                {% endif %}
+                <a href="{% url 'mentorat:my_sessions' %}" class="btn btn-outline">📅 Mes sessions</a>
+            </div>
+        </div>
+
+        {% if universities %}
+        <div class="filters">
+            <a href="{% url 'mentorat:list' %}" class="filter-btn {% if not active_university %}active{% endif %}">Tous</a>
+            {% for uni in universities %}
+            <a href="{% url 'mentorat:list' %}?university={{ uni }}"
+                class="filter-btn {% if active_university == uni %}active{% endif %}">{{ uni }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mentors-grid">
+            {% for mentor in mentors %}
+            <div class="card mentor-card animate-in">
+                {% if mentor.is_verified %}<span class="verified">✅ Vérifié</span>{% endif %}
+
+                <div class="mentor-header">
+                    <div class="mentor-avatar">{{ mentor.user.avatar_initials }}</div>
+                    <div class="mentor-info">
+                        <h3>{{ mentor.user.first_name }} {{ mentor.user.last_name }}</h3>
+                        {% if mentor.university %}<p class="uni">🏫 {{ mentor.university }}</p>{% endif %}
+                        <span class="level-tag">{{ mentor.user.level_icon }} {{ mentor.user.level_name }} — Niv. {{ mentor.user.level }}</span>
+                    </div>
+                </div>
+
+                <p class="mentor-bio">{{ mentor.bio|truncatewords:25 }}</p>
+
+                <div class="mentor-specialties">
+                    {% for spec in mentor.specialties %}
+                    <span class="specialty-tag">{{ spec }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="mentor-stats">
+                    <div class="mentor-stat">
+                        <strong class="stars">{% if mentor.average_rating > 0 %}{{ mentor.average_rating }}/5{% else %}—{% endif %}</strong>
+                        Note
+                    </div>
+                    <div class="mentor-stat">
+                        <strong>{{ mentor.total_sessions }}</strong>
+                        Sessions
+                    </div>
+                    <div class="mentor-stat">
+                        <strong>{{ mentor.total_reviews }}</strong>
+                        Avis
+                    </div>
+                </div>
+
+                <div class="mentor-price">
+                    {{ mentor.hourly_rate_fcfa }} FCFA <small>/ 30 min</small>
+                    <span class="free-badge">1re session gratuite</span>
+                </div>
+
+                <a href="{% url 'mentorat:detail' pk=mentor.pk %}" class="btn btn-primary btn-sm btn-full">Voir le profil →</a>
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:60px;text-align:center;">
+                <p style="font-size:3rem;">🎓</p>
+                <h3>Aucun mentor disponible</h3>
+                <p style="color:var(--text-secondary);">Soyez le premier à devenir mentor !</p>
+                {% if can_become_mentor %}
+                <a href="{% url 'mentorat:become_mentor' %}" class="btn btn-primary" style="margin-top:16px;">Devenir mentor →</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

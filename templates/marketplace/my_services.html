@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Mes Services — PathFinder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main { padding: 32px 0 64px }
+    .services-hero { text-align: center; margin-bottom: 32px }
+    .services-hero h1 { font-size: 1.6rem; margin-bottom: 8px }
+    .services-hero p { color: var(--text-secondary); font-size: 0.9rem }
+    .section-title { font-size: 1.1rem; margin: 24px 0 16px }
+    .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px }
+    .item-card { padding: 20px; transition: all 0.3s }
+    .item-card:hover { transform: translateY(-2px) }
+    .item-card h3 { font-size: 0.95rem; margin-bottom: 6px }
+    .item-card .meta { font-size: 0.8rem; color: var(--text-secondary) }
+    .status-pill { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-full); display: inline-block; margin-top: 8px }
+    .status-pill.active, .status-pill.open { background: rgba(34, 197, 94, 0.12); color: #16a34a }
+    .status-pill.in_progress { background: rgba(26, 86, 219, 0.1); color: var(--primary) }
+    .status-pill.completed { background: rgba(156, 163, 175, 0.15); color: #6b7280 }
+    .status-pill.pending { background: rgba(234, 179, 8, 0.12); color: #d97706 }
+    .status-pill.accepted { background: rgba(34, 197, 94, 0.12); color: #16a34a }
+    .status-pill.rejected { background: rgba(220, 38, 38, 0.1); color: #dc2626 }
+    .nav-links { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap }
+    @media(max-width:768px) { .items-grid { grid-template-columns: 1fr } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main">
+    <div class="container">
+        <div class="services-hero animate-in">
+            <h1>👤 Mon Espace Marketplace</h1>
+            <p>Gérez vos services, missions et candidatures</p>
+        </div>
+
+        <h2 class="section-title">🛠️ Mes services ({{ listings|length }})</h2>
+        <div class="items-grid">
+            {% for listing in listings %}
+            <div class="card item-card animate-in">
+                <h3>{{ listing.title }}</h3>
+                <p class="meta">💰 {{ listing.price_fcfa|intcomma }} FCFA · 📦 {{ listing.total_orders }} commandes</p>
+                <span class="status-pill {{ listing.status }}">{{ listing.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:32px;text-align:center;color:var(--text-secondary);">
+                <p>Aucun service publié. <a href="{% url 'marketplace:create_listing' %}">Proposer un service →</a></p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2 class="section-title">📝 Mes missions postées ({{ posted_missions|length }})</h2>
+        <div class="items-grid">
+            {% for mission in posted_missions %}
+            <a href="{% url 'marketplace:mission_detail' pk=mission.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="card item-card animate-in">
+                    <h3>{{ mission.title }}</h3>
+                    <p class="meta">💰 {{ mission.budget_fcfa|intcomma }} FCFA · 📩 {{ mission.proposals_count }} candidatures</p>
+                    <span class="status-pill {{ mission.status }}">{{ mission.get_status_display }}</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:32px;text-align:center;color:var(--text-secondary);">Aucune mission postée.</div>
+            {% endfor %}
+        </div>
+
+        <h2 class="section-title">📩 Mes candidatures ({{ proposals|length }})</h2>
+        <div class="items-grid">
+            {% for proposal in proposals %}
+            <div class="card item-card animate-in">
+                <h3>{{ proposal.mission.title }}</h3>
+                <p class="meta">💰 {{ proposal.proposed_price_fcfa|intcomma }} FCFA proposés</p>
+                <span class="status-pill {{ proposal.status }}">{{ proposal.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:32px;text-align:center;color:var(--text-secondary);">Aucune candidature.</div>
+            {% endfor %}
+        </div>
+
+        <h2 class="section-title">🎯 Missions assignées ({{ assigned_missions|length }})</h2>
+        <div class="items-grid">
+            {% for mission in assigned_missions %}
+            <a href="{% url 'marketplace:mission_detail' pk=mission.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="card item-card animate-in">
+                    <h3>{{ mission.title }}</h3>
+                    <p class="meta">💰 {{ mission.budget_fcfa|intcomma }} FCFA · Par {{ mission.client.first_name }}</p>
+                    <span class="status-pill {{ mission.status }}">{{ mission.get_status_display }}</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="card" style="grid-column:1/-1;padding:32px;text-align:center;color:var(--text-secondary);">Aucune mission assignée.</div>
+            {% endfor %}
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'marketplace:home' %}" class="btn btn-primary">💼 Marketplace</a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">← Tableau de bord</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

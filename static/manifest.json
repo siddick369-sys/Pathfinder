@@ -1,0 +1,26 @@
+{
+    "name": "PathFinder — Orientation & Compétences",
+    "short_name": "PathFinder",
+    "description": "Plateforme IA d'orientation et de montée en compétences pour étudiants africains",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#1a56db",
+    "orientation": "portrait-primary",
+    "lang": "fr",
+    "categories": ["education", "productivity"],
+    "icons": [
+        {
+            "src": "/static/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
